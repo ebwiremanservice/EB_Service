@@ -4,24 +4,34 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/eb_record.dart';
+import 'auth_service.dart';
 
 class ApiService {
   // ── Base URL ──────────────────────────────────────────────────────────────
   // For Android emulator use 10.0.2.2 to reach the host machine's localhost.
-  // For a physical device replace with your machine's local IP (e.g. 192.168.1.X).
-  // static const String _baseUrl = 'http://10.0.2.2:5000/api';
-   static const String _baseUrl = 'https://eb-nz5b.onrender.com/api';
+  // For production uses Render backend URL.
+  static const String _baseUrl = 'http://10.0.2.2:5000/api';
+  // static const String _baseUrl = 'https://eb-nz5b.onrender.com/api';
   static const Duration _timeout = Duration(seconds: 15);
 
+  static String get baseUrl => _baseUrl;
+
+  // ── Auth & Content Headers ────────────────────────────────────────────────
+  static Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (AuthService.token != null && AuthService.token!.isNotEmpty)
+          'Authorization': 'Bearer ${AuthService.token}',
+      };
+
   // ─────────────────────────────────────────────────────────────────────────
-  // GET /api/eb-records/check-eb?ebNumber=...  — check for duplicate
+  // GET /api/eb-records/check-eb?ebNumber=...  — check for duplicate in user account
   // ─────────────────────────────────────────────────────────────────────────
   static Future<bool> checkEbExists(String ebNumber) async {
     try {
       final uri = Uri.parse('$_baseUrl/eb-records/check-eb')
           .replace(queryParameters: {'ebNumber': ebNumber.trim()});
 
-      final response = await http.get(uri).timeout(_timeout);
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         return body['exists'] == true;
@@ -33,14 +43,14 @@ class ApiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // POST /api/eb-records  — create unique record (duplicate not allowed)
+  // POST /api/eb-records  — create unique record (duplicate not allowed, quota checked)
   // ─────────────────────────────────────────────────────────────────────────
   static Future<EbRecord> saveRecord(EbRecord record) async {
     try {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/eb-records'),
-            headers: const {'Content-Type': 'application/json'},
+            headers: _headers,
             body: jsonEncode(record.toJson()),
           )
           .timeout(_timeout);
@@ -49,6 +59,18 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return EbRecord.fromJson(body['data'] as Map<String, dynamic>);
+      }
+
+      if (response.statusCode == 402) {
+        throw ApiException(
+          body['message'] as String? ?? 'Free tier limit reached (10 houses). Please upgrade.',
+          statusCode: 402,
+          isQuotaExceeded: true,
+        );
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
       }
 
       final errors = body['errors'] as List<dynamic>?;
@@ -71,7 +93,7 @@ class ApiService {
       final response = await http
           .put(
             Uri.parse('$_baseUrl/eb-records/$id'),
-            headers: const {'Content-Type': 'application/json'},
+            headers: _headers,
             body: jsonEncode(record.toJson()),
           )
           .timeout(_timeout);
@@ -80,6 +102,10 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return EbRecord.fromJson(body['data'] as Map<String, dynamic>);
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
       }
 
       final errors = body['errors'] as List<dynamic>?;
@@ -112,7 +138,7 @@ class ApiService {
       final response = await http
           .patch(
             Uri.parse('$_baseUrl/eb-records/$id/schedule'),
-            headers: const {'Content-Type': 'application/json'},
+            headers: _headers,
             body: jsonEncode(payload),
           )
           .timeout(_timeout);
@@ -121,6 +147,10 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return EbRecord.fromJson(body['data'] as Map<String, dynamic>);
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
       }
 
       throw ApiException(
@@ -148,7 +178,7 @@ class ApiService {
       final uri = Uri.parse('$_baseUrl/eb-records/scheduled')
           .replace(queryParameters: params.isNotEmpty ? params : null);
 
-      final response = await http.get(uri).timeout(_timeout);
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -156,6 +186,10 @@ class ApiService {
         return data
             .map((e) => EbRecord.fromJson(e as Map<String, dynamic>))
             .toList();
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
       }
 
       throw ApiException('Failed to load schedule.', statusCode: response.statusCode);
@@ -172,7 +206,7 @@ class ApiService {
   static Future<List<EbRecord>> fetchLatestRecords() async {
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/eb-records'))
+          .get(Uri.parse('$_baseUrl/eb-records'), headers: _headers)
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
@@ -181,6 +215,10 @@ class ApiService {
         return data
             .map((e) => EbRecord.fromJson(e as Map<String, dynamic>))
             .toList();
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
       }
 
       throw ApiException('Failed to load records.', statusCode: response.statusCode);
@@ -199,7 +237,7 @@ class ApiService {
       final uri = Uri.parse('$_baseUrl/eb-records/search')
           .replace(queryParameters: {'query': query});
 
-      final response = await http.get(uri).timeout(_timeout);
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -207,6 +245,10 @@ class ApiService {
         return data
             .map((e) => EbRecord.fromJson(e as Map<String, dynamic>))
             .toList();
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
       }
 
       throw ApiException('Search failed.', statusCode: response.statusCode);
@@ -223,10 +265,13 @@ class ApiService {
   static Future<void> deleteRecord(String id) async {
     try {
       final response = await http
-          .delete(Uri.parse('$_baseUrl/eb-records/$id'))
+          .delete(Uri.parse('$_baseUrl/eb-records/$id'), headers: _headers)
           .timeout(_timeout);
 
       if (response.statusCode != 200) {
+        if (response.statusCode == 401) {
+          await AuthService.logout();
+        }
         throw ApiException('Delete failed.', statusCode: response.statusCode);
       }
     } on SocketException {
@@ -241,8 +286,13 @@ class ApiService {
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
+  final bool isQuotaExceeded;
 
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(
+    this.message, {
+    this.statusCode,
+    this.isQuotaExceeded = false,
+  });
 
   @override
   String toString() => 'ApiException($statusCode): $message';

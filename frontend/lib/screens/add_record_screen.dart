@@ -242,7 +242,11 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
         Navigator.pop(context, true);
       }
     } on ApiException catch (e) {
-      _showSnack(e.message, isError: true);
+      if (e.isQuotaExceeded) {
+        _showQuotaLimitDialog();
+      } else {
+        _showSnack(e.message, isError: true);
+      }
     } catch (e) {
       _showSnack('Unexpected error: ${e.toString()}', isError: true);
     } finally {
@@ -250,6 +254,59 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
         setState(() => _saving = false);
       }
     }
+  }
+
+  void _showQuotaLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded, color: Color(0xFFF59E0B), size: 28),
+            SizedBox(width: 10),
+            Text('Free Tier Limit Reached', style: TextStyle(fontSize: 18)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You have reached the maximum 10 houses on the Free Tier.',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Upgrade to the Yearly Unlimited Plan for ₹799/year to register and manage unlimited EB house locations across your devices.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '⚡ Payment integration will be enabled shortly. Your current houses remain fully active.',
+              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFFB45309)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1565C0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _showSnack('Payment activation will be enabled soon.', isError: false);
+            },
+            child: const Text('Upgrade (₹799/Year)'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _resetForm() {

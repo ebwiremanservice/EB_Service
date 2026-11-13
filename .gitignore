@@ -4,6 +4,10 @@
 *.rar
 *.apk
 EB.zip
+mathavan_eb_records_backup.json
+
+# Accounting & Tax CSVs
+GSTR1_*.csv
 
 # Environment & Credentials
 .env

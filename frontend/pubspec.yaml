@@ -22,6 +22,9 @@ dependencies:
   # Utility: date/time formatting
   intl: ^0.19.0
 
+  # Local persistence (auth token & user session)
+  shared_preferences: ^2.2.3
+
   # Material icons (already included via flutter, but explicit for clarity)
   cupertino_icons: ^1.0.8
   geocoding: ^5.0.1

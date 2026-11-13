@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../models/eb_record.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../widgets/curved_header.dart';
 import '../widgets/record_card.dart';
@@ -15,10 +16,12 @@ enum ScheduleDateFilter { all, today, tomorrow, custom }
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToAdd;
+  final VoidCallback? onLogout;
 
   const HomeScreen({
     super.key,
     this.onNavigateToAdd,
+    this.onLogout,
   });
 
   @override
@@ -278,6 +281,370 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // ── Show Profile & Quota Bottom Sheet ────────────────────────────────────
+  void _showProfileSheet() {
+    final houseCount = _allRecords.length;
+    final isLimitReached = houseCount >= 10;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle pill
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // User Info
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: const Color(0xFF0D47A1).withValues(alpha: 0.1),
+                    child: Text(
+                      AuthService.userName.isNotEmpty
+                          ? AuthService.userName[0].toUpperCase()
+                          : 'W',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0D47A1),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AuthService.userName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          AuthService.userEmail,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Quota / Subscription Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isLimitReached
+                      ? const Color(0xFFFFFBEB)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isLimitReached
+                        ? const Color(0xFFFDE68A)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              isLimitReached
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.home_work_rounded,
+                              size: 18,
+                              color: isLimitReached
+                                  ? const Color(0xFFD97706)
+                                  : const Color(0xFF0D47A1),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Free Plan Quota',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '$houseCount / 10 Used',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: isLimitReached
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF0D47A1),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: (houseCount / 10).clamp(0.0, 1.0),
+                        minHeight: 7,
+                        backgroundColor: Colors.grey.shade300,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isLimitReached
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFF0D47A1),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isLimitReached
+                          ? 'You have reached your 10 free house limit.'
+                          : '${10 - houseCount} free house registrations remaining.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isLimitReached
+                            ? const Color(0xFFB45309)
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Upgrade Option (Held per instruction)
+              InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showUpgradeInfoDialog();
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFC7D2FE)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.workspace_premium_rounded, color: Color(0xFF4338CA), size: 22),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Annual Plan (₹799/year)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF3730A3),
+                              ),
+                            ),
+                            Text(
+                              'Unlimited houses, cloud backup & sync',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF4338CA)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF4338CA)),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Sign Out Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    _confirmLogout();
+                  },
+                  icon: const Icon(Icons.logout_rounded, color: Color(0xFFE53935)),
+                  label: const Text(
+                    'Sign Out',
+                    style: TextStyle(
+                      color: Color(0xFFE53935),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    side: BorderSide(color: Colors.red.shade200),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Confirm Sign Out Dialog ──────────────────────────────────────────────
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out of this device?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (widget.onLogout != null) {
+                widget.onLogout!();
+              } else {
+                await AuthService.logout();
+                if (mounted) {
+                  setState(() {});
+                }
+              }
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Show Upgrade Info Dialog ─────────────────────────────────────────────
+  void _showUpgradeInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEEF2FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.electric_bolt_rounded,
+                size: 38,
+                color: Color(0xFF4338CA),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'EB Houses Pro',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '₹799 / Year',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0D47A1),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Enjoy unlimited house registrations, priority navigation, cross-device sync, and full cloud backup.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFB45309)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Online payment gateway will be enabled soon. Contact admin to activate Pro early.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0D47A1),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Got it'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Build Method ──────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -291,49 +658,79 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // ── Curved Top Header with Greeting, Location & Register Button ────
           CurvedHeader(
-            greeting: 'Hi Mathavan 👋',
+            greeting: 'Hi ${AuthService.userName} 👋',
             currentLocation: _currentLocationText,
             onRefreshLocation: _detectCurrentLocation,
-            trailing: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _openAddRecord,
-                borderRadius: BorderRadius.circular(22),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _openAddRecord,
                     borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add_rounded,
-                        size: 19,
-                        color: Color(0xFF0D47A1),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
+                            size: 18,
+                            color: Color(0xFF0D47A1),
+                          ),
+                          SizedBox(width: 3),
+                          Text(
+                            'Add',
+                            style: TextStyle(
+                              color: Color(0xFF0D47A1),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Add',
-                        style: TextStyle(
-                          color: Color(0xFF0D47A1),
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _showProfileSheet,
+                    borderRadius: BorderRadius.circular(22),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             bottomChild: // Search Bar with Clean Light Styling
               Container(
@@ -386,6 +783,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // ── 2 Main Tabs: "All Houses" & "Schedule" ───────────────────────────
         _buildTwoTabsBar(),
+
+        // ── Quota Alert Banner (Shown when 10/10 free houses used) ───────────
+        if (_allRecords.length >= 10)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: InkWell(
+              onTap: _showUpgradeInfoDialog,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.bolt_rounded, size: 18, color: Color(0xFFD97706)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Free plan limit reached (10/10). Tap to learn about Pro.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF92400E),
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFD97706)),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
         // ── Tab Content Area ─────────────────────────────────────────────────
         Expanded(

@@ -1,6 +1,7 @@
 /**
  * EB Records Controller
  * Handles business logic for creating, updating, searching, scheduling, and listing EB records.
+ * Scoped per authenticated user for multi-tenant isolation.
  */
 
 const mongoose = require('mongoose');
@@ -9,7 +10,7 @@ const { validationResult } = require('express-validator');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/eb-records/check-eb?ebNumber=...
-// Checks if an EB number is already registered (for duplicate prevention)
+// Checks if an EB number is already registered for this user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.checkEbNumber = async (req, res) => {
   try {
@@ -18,11 +19,15 @@ exports.checkEbNumber = async (req, res) => {
       return res.status(400).json({ success: false, message: 'EB number is required.' });
     }
 
-    const existing = await EbRecord.findOne({ ebNumber });
+    const existing = await EbRecord.findOne({
+      userId: req.user._id,
+      ebNumber,
+    });
+
     return res.status(200).json({
       success: true,
       exists: !!existing,
-      message: existing ? 'EB Number already registered!' : 'EB Number is available.',
+      message: existing ? 'EB Number already registered in your account!' : 'EB Number is available.',
       data: existing || null,
     });
   } catch (error) {
@@ -33,7 +38,7 @@ exports.checkEbNumber = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/eb-records
-// Creates a new EB record with strict UNIQUE check & optional scheduledDate.
+// Creates a new EB record with 10-house free tier quota check & unique check
 // ─────────────────────────────────────────────────────────────────────────────
 exports.createRecord = async (req, res) => {
   const errors = validationResult(req);
@@ -42,15 +47,38 @@ exports.createRecord = async (req, res) => {
   }
 
   try {
-    const { ebNumber, consumerName, mobileNumber, landmarkNotes, longitude, latitude, address, scheduledDate } = req.body;
+    // ── Free Tier 10-House Quota Check ───────────────────────────────────────
+    if (!req.user.canAddHouse()) {
+      return res.status(402).json({
+        success: false,
+        paymentRequired: true,
+        limitReached: true,
+        count: req.user.registeredHousesCount,
+        message: 'Free tier limit of 10 houses reached. Upgrade to yearly unlimited plan (₹799/yr) to add more houses.',
+      });
+    }
+
+    const {
+      ebNumber,
+      consumerName,
+      mobileNumber,
+      landmarkNotes,
+      longitude,
+      latitude,
+      address,
+      scheduledDate,
+    } = req.body;
     const cleanEb = ebNumber.trim();
 
-    // Check if EB number already exists
-    const existing = await EbRecord.findOne({ ebNumber: cleanEb });
+    // Check if EB number already exists for this user account
+    const existing = await EbRecord.findOne({
+      userId: req.user._id,
+      ebNumber: cleanEb,
+    });
     if (existing) {
       return res.status(409).json({
         success: false,
-        message: `EB Number "${cleanEb}" is already registered. Duplicates are not allowed.`,
+        message: `EB Number "${cleanEb}" is already registered in your account. Duplicates are not allowed.`,
       });
     }
 
@@ -58,6 +86,8 @@ exports.createRecord = async (req, res) => {
     const coordinates = [parseFloat(longitude), parseFloat(latitude)];
 
     const newRecord = new EbRecord({
+      userId: req.user._id,
+      userEmail: req.user.email,
       ebNumber: cleanEb,
       consumerName: consumerName ? consumerName.trim() : '',
       mobileNumber: mobileNumber ? mobileNumber.trim() : '',
@@ -73,10 +103,15 @@ exports.createRecord = async (req, res) => {
 
     await newRecord.save();
 
+    // Sync accurate registered houses count for the user
+    req.user.registeredHousesCount = await EbRecord.countDocuments({ userId: req.user._id });
+    await req.user.save();
+
     return res.status(201).json({
       success: true,
       message: 'EB Record registered successfully.',
       data: newRecord,
+      registeredHousesCount: req.user.registeredHousesCount,
     });
   } catch (error) {
     console.error('[createRecord]', error);
@@ -86,7 +121,7 @@ exports.createRecord = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/eb-records/:id/schedule
-// Updates or sets a scheduled visit date and status for an EB house.
+// Updates or sets a scheduled visit date and status for an EB house
 // ─────────────────────────────────────────────────────────────────────────────
 exports.updateSchedule = async (req, res) => {
   try {
@@ -105,14 +140,14 @@ exports.updateSchedule = async (req, res) => {
       updateFields.visitStatus = visitStatus;
     }
 
-    const record = await EbRecord.findByIdAndUpdate(
-      id,
+    const record = await EbRecord.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
       { $set: updateFields },
       { new: true, runValidators: true }
     );
 
     if (!record) {
-      return res.status(404).json({ success: false, message: 'Record not found.' });
+      return res.status(404).json({ success: false, message: 'Record not found in your account.' });
     }
 
     return res.status(200).json({
@@ -128,8 +163,7 @@ exports.updateSchedule = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUT /api/eb-records/:id
-// Updates an existing EB record.
-// Validates uniqueness: EB number cannot be assigned to another existing record.
+// Updates an existing EB record for the current user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.updateRecord = async (req, res) => {
   const errors = validationResult(req);
@@ -155,22 +189,23 @@ exports.updateRecord = async (req, res) => {
       visitStatus,
     } = req.body;
 
-    const record = await EbRecord.findById(id);
+    const record = await EbRecord.findOne({ _id: id, userId: req.user._id });
     if (!record) {
-      return res.status(404).json({ success: false, message: 'Record not found.' });
+      return res.status(404).json({ success: false, message: 'Record not found in your account.' });
     }
 
-    // If ebNumber is being modified, verify it does not conflict with another consumer's record
+    // If ebNumber is being modified, verify it does not conflict with another consumer's record in this account
     if (ebNumber) {
       const cleanEb = ebNumber.trim();
       const duplicate = await EbRecord.findOne({
+        userId: req.user._id,
         ebNumber: cleanEb,
         _id: { $ne: id },
       });
       if (duplicate) {
         return res.status(409).json({
           success: false,
-          message: `EB Number "${cleanEb}" is already registered to another consumer. Duplicates are not allowed.`,
+          message: `EB Number "${cleanEb}" is already registered to another consumer in your account. Duplicates are not allowed.`,
         });
       }
       record.ebNumber = cleanEb;
@@ -215,15 +250,14 @@ exports.updateRecord = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/eb-records/scheduled?date=YYYY-MM-DD
-// Returns house records scheduled for a particular date (or upcoming if no date).
+// Returns house records scheduled for a particular date for this user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getScheduledRecords = async (req, res) => {
   try {
     const { date } = req.query;
-    const filter = {};
+    const filter = { userId: req.user._id };
 
     if (date) {
-      // Calculate start and end of that specific day
       const targetDate = new Date(date);
       const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
       const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
@@ -233,7 +267,6 @@ exports.getScheduledRecords = async (req, res) => {
         $lte: endOfDay,
       };
     } else {
-      // If no specific date passed, get all records that have a scheduled date
       filter.scheduledDate = { $ne: null };
     }
 
@@ -254,7 +287,7 @@ exports.getScheduledRecords = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/eb-records/search?query=<partial_eb_number_or_address>
-// Searches records by EB number, consumer name, landmark, or street address.
+// Searches records belonging to the current user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.searchRecords = async (req, res) => {
   try {
@@ -267,6 +300,7 @@ exports.searchRecords = async (req, res) => {
     const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
     const records = await EbRecord.find({
+      userId: req.user._id,
       $or: [
         { ebNumber: { $regex: regex } },
         { consumerName: { $regex: regex } },
@@ -288,11 +322,11 @@ exports.searchRecords = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/eb-records
-// Returns the latest 50 records ordered by most recently updated.
+// Returns the latest 50 records for this user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getLatestRecords = async (req, res) => {
   try {
-    const records = await EbRecord.find({})
+    const records = await EbRecord.find({ userId: req.user._id })
       .sort({ updatedAt: -1 })
       .limit(50)
       .lean();
@@ -306,7 +340,7 @@ exports.getLatestRecords = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DELETE /api/eb-records/:id
-// Deletes a single record by its MongoDB _id.
+// Deletes a single record by its MongoDB _id for this user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.deleteRecord = async (req, res) => {
   try {
@@ -315,11 +349,20 @@ exports.deleteRecord = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid record ID format.' });
     }
 
-    const record = await EbRecord.findByIdAndDelete(id);
+    const record = await EbRecord.findOneAndDelete({ _id: id, userId: req.user._id });
     if (!record) {
-      return res.status(404).json({ success: false, message: 'Record not found.' });
+      return res.status(404).json({ success: false, message: 'Record not found in your account.' });
     }
-    return res.status(200).json({ success: true, message: 'Record deleted successfully.' });
+
+    // Sync accurate registered houses count for the user
+    req.user.registeredHousesCount = await EbRecord.countDocuments({ userId: req.user._id });
+    await req.user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Record deleted successfully.',
+      registeredHousesCount: req.user.registeredHousesCount,
+    });
   } catch (error) {
     console.error('[deleteRecord]', error);
     return res.status(500).json({ success: false, message: 'Server error during deletion.' });

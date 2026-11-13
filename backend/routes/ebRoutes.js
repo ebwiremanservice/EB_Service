@@ -6,6 +6,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
 const {
   checkEbNumber,
   createRecord,
@@ -16,6 +17,9 @@ const {
   getLatestRecords,
   deleteRecord,
 } = require('../controllers/ebController');
+
+// All EB Records routes require authenticated user session
+router.use(authMiddleware);
 
 // ─── Validation Rules ────────────────────────────────────────────────────────
 

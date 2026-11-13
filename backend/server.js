@@ -9,6 +9,7 @@ const helmet  = require('helmet');
 const cors    = require('cors');
 
 const connectDB   = require('./config/db');
+const authRoutes  = require('./routes/authRoutes');
 const ebRoutes    = require('./routes/ebRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -31,6 +32,7 @@ app.get('/health', (req, res) => {
 });
 
 // ─── API Routes ──────────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/eb-records', ebRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────

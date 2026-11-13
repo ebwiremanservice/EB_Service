@@ -2,10 +2,14 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
+import 'services/auth_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AuthService.init();
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -16,8 +20,30 @@ void main() {
   runApp(const EbWiremanApp());
 }
 
-class EbWiremanApp extends StatelessWidget {
+class EbWiremanApp extends StatefulWidget {
   const EbWiremanApp({super.key});
+
+  @override
+  State<EbWiremanApp> createState() => _EbWiremanAppState();
+}
+
+class _EbWiremanAppState extends State<EbWiremanApp> {
+  bool _isAuthenticated = AuthService.isAuthenticated;
+
+  void _onLoginSuccess() {
+    setState(() {
+      _isAuthenticated = true;
+    });
+  }
+
+  void _onLogout() async {
+    await AuthService.logout();
+    if (mounted) {
+      setState(() {
+        _isAuthenticated = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +128,9 @@ class EbWiremanApp extends StatelessWidget {
 
       themeMode: ThemeMode.light,
 
-      home: const HomeScreen(),
+      home: _isAuthenticated
+          ? HomeScreen(onLogout: _onLogout)
+          : AuthScreen(onLoginSuccess: _onLoginSuccess),
     );
   }
 }

@@ -8,7 +8,23 @@ const mongoose = require('mongoose');
 
 const ebRecordSchema = new mongoose.Schema(
   {
-    // EB Consumer / Service Number — must be unique per consumer
+    // Owner reference for multi-user isolation
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+      default: null,
+    },
+
+    userEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      index: true,
+      default: '',
+    },
+
+    // EB Consumer / Service Number — unique per user account
     ebNumber: {
       type: String,
       required: [true, 'EB Number is required'],
@@ -86,6 +102,9 @@ const ebRecordSchema = new mongoose.Schema(
 
 // 2dsphere index enables MongoDB geospatial queries
 ebRecordSchema.index({ location: '2dsphere' });
+
+// Ensure EB Number is unique per user account (sparse in case of legacy records without userId)
+ebRecordSchema.index({ userId: 1, ebNumber: 1 }, { unique: true, sparse: true });
 
 // Compound text index for fast search
 ebRecordSchema.index(
