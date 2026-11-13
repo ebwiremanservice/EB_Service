@@ -3,20 +3,42 @@
 *.tar.gz
 *.rar
 *.apk
-EB.zip
+*.backup*
+*backup*.json
 mathavan_eb_records_backup.json
 
-# Accounting & Tax CSVs
-GSTR1_*.csv
+# Accounting, Data, & CSV Exports
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.sql
+*.sqlite
+*.db
 
 # Environment & Credentials
 .env
 .env.*
 !.env.example
 
-# Node dependencies
+# Keys, Keystores & Secrets
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+*.cert
+*.crt
+key.properties
+google-services.json
+GoogleService-Info.plist
+
+# Node dependencies & logs
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
 
 # Flutter / Dart
 .dart_tool/
@@ -33,4 +55,3 @@ local.properties
 **/android/app/build/
 **/android/captures/
 **/android/.cxx/
-
