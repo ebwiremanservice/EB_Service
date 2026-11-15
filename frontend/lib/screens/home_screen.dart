@@ -723,8 +723,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ).then((_) {
-                        _loadRecords();
-                        _loadZones();
+                        _loadAllData();
                       });
                     },
                     borderRadius: BorderRadius.circular(22),

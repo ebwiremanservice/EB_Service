@@ -433,10 +433,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         try {
                           await AuthService.deleteAccount(_userEmail);
                           if (mounted) {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => const AuthScreen()),
-                              (route) => false,
-                            );
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            widget.onLogout();
                           }
                         } catch (e) {
                           setState(() => _isLoading = false);
@@ -772,3 +770,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
