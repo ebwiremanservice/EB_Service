@@ -36,6 +36,35 @@ function getEmailTemplate(otpCode, userName) {
   `;
 }
 
+// ── 0. Google Apps Script Gmail Relay (HTTPS port 443 - zero cloud blocking, NO domain needed) ──
+async function sendViaGmailRelay(relayUrl, toEmail, otpCode, userName) {
+  const payload = {
+    to: toEmail,
+    subject: `${otpCode} is your Wireman Service Verification Code`,
+    html: getEmailTemplate(otpCode, userName),
+  };
+
+  const response = await fetch(relayUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const text = await response.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (_) {
+    data = { success: response.ok };
+  }
+
+  if (data && data.success === false) {
+    throw new Error(data.error || 'Google Relay reported failure');
+  }
+  return data;
+}
+
 // ── 1. Resend REST API (HTTPS port 443) ──────────────────────────────────────
 function sendViaResend(apiKey, toEmail, otpCode, userName) {
   return new Promise((resolve, reject) => {
@@ -145,6 +174,17 @@ function sendViaSmtp(toEmail, otpCode, userName) {
 
 // ── Main Dispatcher ──────────────────────────────────────────────────────────
 exports.sendOtpEmail = async (toEmail, otpCode, userName = 'Wireman') => {
+  // Strategy 0: Google Apps Script Gmail Relay (100% Free, NO Domain Needed, Delivers to ANY recipient)
+  if (process.env.GMAIL_RELAY_URL) {
+    try {
+      await sendViaGmailRelay(process.env.GMAIL_RELAY_URL, toEmail, otpCode, userName);
+      console.log(`[emailService] OTP sent via Google Gmail Relay to ${toEmail}`);
+      return { success: true, delivered: true, provider: 'gmail-relay' };
+    } catch (err) {
+      console.error('[emailService] Google Gmail Relay failed:', err.message);
+    }
+  }
+
   // Strategy 1: Resend HTTP REST API
   if (process.env.RESEND_API_KEY) {
     try {
