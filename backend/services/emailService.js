@@ -20,6 +20,9 @@ function createTransporter() {
       user,
       pass,
     },
+    connectionTimeout: 10000, // 10s connection timeout
+    greetingTimeout: 10000,   // 10s greeting timeout
+    socketTimeout: 15000,     // 15s socket timeout
   });
 }
 

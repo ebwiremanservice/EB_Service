@@ -10,9 +10,9 @@ class ApiService {
   // ── Base URL ──────────────────────────────────────────────────────────────
   // For Android emulator use 10.0.2.2 to reach the host machine's localhost.
   // For production uses Render backend URL.
-  static const String _baseUrl = 'http://10.0.2.2:5000/api';
-  // static const String _baseUrl = 'https://eb-nz5b.onrender.com/api';
-  static const Duration _timeout = Duration(seconds: 15);
+  // static const String _baseUrl = 'http://10.0.2.2:5000/api';
+  static const String _baseUrl = 'https://eb-nz5b.onrender.com/api';
+  static const Duration _timeout = Duration(seconds: 35);
 
   static String get baseUrl => _baseUrl;
 
@@ -201,13 +201,45 @@ class ApiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // GET /api/eb-records  — latest 50 records
+  // GET /api/eb-records/zones  — get unique zones registered by this user
   // ─────────────────────────────────────────────────────────────────────────
-  static Future<List<EbRecord>> fetchLatestRecords() async {
+  static Future<List<String>> fetchZones() async {
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/eb-records'), headers: _headers)
+          .get(Uri.parse('$_baseUrl/eb-records/zones'), headers: _headers)
           .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = body['data'] as List<dynamic>?;
+        if (list == null) return [];
+        return list.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+      }
+
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/eb-records  — latest records (supports optional zone filter)
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<List<EbRecord>> fetchLatestRecords({String? zone}) async {
+    try {
+      final params = <String, String>{};
+      if (zone != null && zone.trim().isNotEmpty && zone != 'All') {
+        params['zone'] = zone.trim();
+      }
+
+      final uri = Uri.parse('$_baseUrl/eb-records')
+          .replace(queryParameters: params.isNotEmpty ? params : null);
+
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;

@@ -45,7 +45,7 @@ class AuthService {
               if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
             }),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 35));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -59,6 +59,10 @@ class AuthService {
       );
     } catch (e) {
       if (e is ApiException) rethrow;
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('timeoutexception') || msg.contains('timed out')) {
+        throw const ApiException('Server is waking up from sleep. Please tap "Send Verification Code" again.');
+      }
       throw ApiException('Network error while requesting code: ${e.toString()}');
     }
   }
@@ -78,7 +82,7 @@ class AuthService {
               'otp': otp.trim(),
             }),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 35));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -106,6 +110,10 @@ class AuthService {
       );
     } catch (e) {
       if (e is ApiException) rethrow;
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('timeoutexception') || msg.contains('timed out')) {
+        throw const ApiException('Verification timed out. Please check your internet connection and try again.');
+      }
       throw ApiException('Network error during verification: ${e.toString()}');
     }
   }
@@ -126,7 +134,7 @@ class AuthService {
               'Authorization': 'Bearer $_cachedToken',
             },
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 35));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 

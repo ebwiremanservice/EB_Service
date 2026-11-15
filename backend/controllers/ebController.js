@@ -59,6 +59,7 @@ exports.createRecord = async (req, res) => {
     }
 
     const {
+      zone,
       ebNumber,
       consumerName,
       mobileNumber,
@@ -69,6 +70,7 @@ exports.createRecord = async (req, res) => {
       scheduledDate,
     } = req.body;
     const cleanEb = ebNumber.trim();
+    const cleanZone = (zone && zone.trim()) ? zone.trim() : 'General';
 
     // Check if EB number already exists for this user account
     const existing = await EbRecord.findOne({
@@ -88,6 +90,7 @@ exports.createRecord = async (req, res) => {
     const newRecord = new EbRecord({
       userId: req.user._id,
       userEmail: req.user.email,
+      zone: cleanZone,
       ebNumber: cleanEb,
       consumerName: consumerName ? consumerName.trim() : '',
       mobileNumber: mobileNumber ? mobileNumber.trim() : '',
@@ -178,6 +181,7 @@ exports.updateRecord = async (req, res) => {
     }
 
     const {
+      zone,
       ebNumber,
       consumerName,
       mobileNumber,
@@ -192,6 +196,10 @@ exports.updateRecord = async (req, res) => {
     const record = await EbRecord.findOne({ _id: id, userId: req.user._id });
     if (!record) {
       return res.status(404).json({ success: false, message: 'Record not found in your account.' });
+    }
+
+    if (zone !== undefined) {
+      record.zone = (zone && zone.trim()) ? zone.trim() : 'General';
     }
 
     // If ebNumber is being modified, verify it does not conflict with another consumer's record in this account
@@ -307,10 +315,11 @@ exports.searchRecords = async (req, res) => {
         { mobileNumber: { $regex: regex } },
         { landmarkNotes: { $regex: regex } },
         { address: { $regex: regex } },
+        { zone: { $regex: regex } },
       ],
     })
       .sort({ updatedAt: -1 })
-      .limit(50)
+      .limit(100)
       .lean();
 
     return res.status(200).json({ success: true, count: records.length, data: records });
@@ -321,14 +330,42 @@ exports.searchRecords = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/eb-records/zones
+// Returns list of unique zone names registered by this user
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getZones = async (req, res) => {
+  try {
+    const rawZones = await EbRecord.distinct('zone', { userId: req.user._id });
+    const zones = rawZones
+      .filter((z) => z && typeof z === 'string' && z.trim().length > 0)
+      .map((z) => z.trim())
+      .sort((a, b) => a.localeCompare(b));
+
+    return res.status(200).json({
+      success: true,
+      count: zones.length,
+      data: zones,
+    });
+  } catch (error) {
+    console.error('[getZones]', error);
+    return res.status(500).json({ success: false, message: 'Server error while fetching zones.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/eb-records
-// Returns the latest 50 records for this user
+// Returns the records for this user (supports optional ?zone= filter)
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getLatestRecords = async (req, res) => {
   try {
-    const records = await EbRecord.find({ userId: req.user._id })
+    const filter = { userId: req.user._id };
+    if (req.query.zone && req.query.zone.trim()) {
+      filter.zone = req.query.zone.trim();
+    }
+
+    const records = await EbRecord.find(filter)
       .sort({ updatedAt: -1 })
-      .limit(50)
+      .limit(100)
       .lean();
 
     return res.status(200).json({ success: true, count: records.length, data: records });

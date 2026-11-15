@@ -24,6 +24,14 @@ const ebRecordSchema = new mongoose.Schema(
       default: '',
     },
 
+    // Zone / Sector (e.g., "North Zone", "Town 1", "Zone A")
+    zone: {
+      type: String,
+      trim: true,
+      default: 'General',
+      index: true,
+    },
+
     // EB Consumer / Service Number — unique per user account
     ebNumber: {
       type: String,
@@ -106,9 +114,12 @@ ebRecordSchema.index({ location: '2dsphere' });
 // Ensure EB Number is unique per user account (sparse in case of legacy records without userId)
 ebRecordSchema.index({ userId: 1, ebNumber: 1 }, { unique: true, sparse: true });
 
-// Compound text index for fast search
+// Index for fast zone-wise grouping and filtering per user
+ebRecordSchema.index({ userId: 1, zone: 1 });
+
+// Compound text index for fast search (includes zone)
 ebRecordSchema.index(
-  { ebNumber: 'text', consumerName: 'text', mobileNumber: 'text', landmarkNotes: 'text', address: 'text' },
+  { ebNumber: 'text', consumerName: 'text', mobileNumber: 'text', landmarkNotes: 'text', address: 'text', zone: 'text' },
   { name: 'eb_text_search' }
 );
 

@@ -5,13 +5,30 @@
 
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-  const uri = process.env.MONGO_URI;
+function sanitizeMongoUri(rawUri) {
+  if (!rawUri) return rawUri;
+  // If password contains unescaped special characters like '@', URL-encode it
+  const match = rawUri.match(/^(mongodb(?:\+srv)?:\/\/)([^:]+):(.+)@([^@]+)$/);
+  if (match) {
+    const protocol = match[1];
+    const username = match[2];
+    const password = match[3];
+    const hostAndRest = match[4];
+    const encodedPassword = encodeURIComponent(decodeURIComponent(password));
+    return `${protocol}${username}:${encodedPassword}@${hostAndRest}`;
+  }
+  return rawUri;
+}
 
-  if (!uri) {
+const connectDB = async () => {
+  const rawUri = process.env.MONGO_URI;
+
+  if (!rawUri) {
     console.error('❌  MONGO_URI is not set in environment variables.');
     process.exit(1);
   }
+
+  const uri = sanitizeMongoUri(rawUri);
 
   try {
     const conn = await mongoose.connect(uri, {

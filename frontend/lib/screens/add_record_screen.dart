@@ -34,6 +34,13 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
   final _mobileController = TextEditingController();
   final _notesController = TextEditingController();
 
+  // Zone selection state
+  List<String> _zones = [];
+  String? _selectedZone;
+  bool _isAddingCustomZone = false;
+  final _customZoneController = TextEditingController();
+  bool _loadingZones = false;
+
   Position? _position;
   bool _fetchingLocation = false;
   bool _saving = false;
@@ -53,6 +60,7 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
     super.initState();
     if (widget.recordToEdit != null) {
       final rec = widget.recordToEdit!;
+      _selectedZone = rec.zone.isNotEmpty ? rec.zone : 'General';
       _ebNumberController.text = rec.ebNumber;
       _consumerNameController.text = rec.consumerName;
       _mobileController.text = rec.mobileNumber;
@@ -72,11 +80,44 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
         speedAccuracy: 0.0,
       );
     }
+    _loadZones();
+  }
+
+  Future<void> _loadZones() async {
+    setState(() => _loadingZones = true);
+    try {
+      final fetched = await ApiService.fetchZones();
+      if (!mounted) return;
+      setState(() {
+        _zones = fetched;
+        if (widget.recordToEdit != null && widget.recordToEdit!.zone.isNotEmpty) {
+          final editZone = widget.recordToEdit!.zone;
+          if (!_zones.contains(editZone)) {
+            _zones.insert(0, editZone);
+          }
+          _selectedZone = editZone;
+          _isAddingCustomZone = false;
+        } else if (_zones.isEmpty) {
+          // First time user: no zones exist yet, so open manual entry
+          _isAddingCustomZone = true;
+        } else {
+          _isAddingCustomZone = false;
+          _selectedZone ??= _zones.first;
+        }
+      });
+    } catch (_) {
+      if (mounted && _zones.isEmpty) {
+        setState(() => _isAddingCustomZone = true);
+      }
+    } finally {
+      if (mounted) setState(() => _loadingZones = false);
+    }
   }
 
   @override
   void dispose() {
     _ebDebounceTimer?.cancel();
+    _customZoneController.dispose();
     _ebNumberController.dispose();
     _addressController.dispose();
     _consumerNameController.dispose();
@@ -207,11 +248,22 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
       return;
     }
 
+    final effectiveZone = _isAddingCustomZone
+        ? _customZoneController.text.trim()
+        : (_selectedZone?.trim() ?? '');
+
+    if (effectiveZone.isEmpty) {
+      HapticFeedback.heavyImpact();
+      _showSnack('Please select or enter a Zone for this house.', isError: true);
+      return;
+    }
+
     setState(() => _saving = true);
 
     try {
       final record = EbRecord(
         id: widget.recordToEdit?.id,
+        zone: effectiveZone,
         ebNumber: _ebNumberController.text.trim(),
         consumerName: _consumerNameController.text.trim(),
         mobileNumber: _mobileController.text.trim(),
@@ -316,6 +368,7 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
     _consumerNameController.clear();
     _mobileController.clear();
     _notesController.clear();
+    _customZoneController.clear();
     setState(() {
       _position = null;
       _fetchingLocation = false;
@@ -323,6 +376,13 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
       _isEbDuplicate = null;
       _ebValidationMessage = null;
       _scheduledDate = null;
+      if (_zones.isNotEmpty) {
+        _isAddingCustomZone = false;
+        _selectedZone = _zones.first;
+      } else {
+        _isAddingCustomZone = true;
+        _selectedZone = null;
+      }
     });
   }
 
@@ -475,6 +535,164 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ── 0. Zone Field (First Field: Dropdown of existing zones + "Other / Add New Zone") ─
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.layers_rounded, size: 18, color: Color(0xFF1565C0)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Zone / Sector *',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_zones.isNotEmpty)
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _isAddingCustomZone = !_isAddingCustomZone;
+                                    if (_isAddingCustomZone) {
+                                      _customZoneController.clear();
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _isAddingCustomZone ? Icons.list_rounded : Icons.add_rounded,
+                                        size: 15,
+                                        color: const Color(0xFF1565C0),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        _isAddingCustomZone ? 'Choose from List' : '+ Other / New Zone',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF1565C0),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        if (!_isAddingCustomZone && _zones.isNotEmpty)
+                          DropdownButtonFormField<String>(
+                            value: _zones.contains(_selectedZone) ? _selectedZone : _zones.first,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              prefixIcon: const Icon(Icons.location_city_rounded, color: Color(0xFF1565C0)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFF1565C0), width: 1.6),
+                              ),
+                            ),
+                            items: [
+                              ..._zones.map(
+                                (z) => DropdownMenuItem(
+                                  value: z,
+                                  child: Text(
+                                    z,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const DropdownMenuItem(
+                                value: '__ADD_NEW__',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF1565C0)),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      '+ Other (Add New Zone)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1565C0),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val == '__ADD_NEW__') {
+                                setState(() {
+                                  _isAddingCustomZone = true;
+                                  _customZoneController.clear();
+                                });
+                              } else if (val != null) {
+                                setState(() => _selectedZone = val);
+                              }
+                            },
+                          )
+                        else
+                          TextFormField(
+                            controller: _customZoneController,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: InputDecoration(
+                              hintText: 'Enter zone name (e.g. North Zone, Town East)',
+                              hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade400),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              prefixIcon: const Icon(Icons.add_location_alt_rounded, color: Color(0xFF1565C0)),
+                              helperText: _zones.isEmpty
+                                  ? 'First-time registration: Enter your zone name. It will be saved for next time.'
+                                  : 'New zone will be saved and added to your dropdown for future registrations.',
+                              helperStyle: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Color(0xFF1565C0), width: 1.6),
+                              ),
+                            ),
+                            validator: (v) {
+                              if (_isAddingCustomZone || _zones.isEmpty) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Please enter a zone name';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
+
+                        const SizedBox(height: 18),
+
                         // ── 1. EB Number Field (xx-xxx-xxx-xxx + Unique Check) ─
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

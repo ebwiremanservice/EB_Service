@@ -47,6 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<EbRecord> _searchedAllRecords = [];
   List<EbRecord> _searchedScheduledRecords = [];
 
+  // Zone Filter State (for All Houses tab)
+  String _selectedZoneFilter = 'All';
+
   // Schedule Tab Filter State
   ScheduleDateFilter _scheduleFilter = ScheduleDateFilter.all;
   DateTime? _customScheduleDate;
@@ -165,15 +168,52 @@ class _HomeScreenState extends State<HomeScreen> {
       return r.ebNumber.toLowerCase().contains(query) ||
           r.address.toLowerCase().contains(query) ||
           r.consumerName.toLowerCase().contains(query) ||
-          r.landmarkNotes.toLowerCase().contains(query);
+          r.landmarkNotes.toLowerCase().contains(query) ||
+          r.mobileNumber.toLowerCase().contains(query) ||
+          r.zone.toLowerCase().contains(query);
     }).toList();
 
     _searchedScheduledRecords = _scheduledRecords.where((r) {
       return r.ebNumber.toLowerCase().contains(query) ||
           r.address.toLowerCase().contains(query) ||
           r.consumerName.toLowerCase().contains(query) ||
-          r.landmarkNotes.toLowerCase().contains(query);
+          r.landmarkNotes.toLowerCase().contains(query) ||
+          r.mobileNumber.toLowerCase().contains(query) ||
+          r.zone.toLowerCase().contains(query);
     }).toList();
+  }
+
+  // ── Unique Zones list from loaded records ─────────────────────────────────
+  List<String> _getUniqueZones() {
+    final set = <String>{};
+    for (final r in _allRecords) {
+      final z = r.zone.trim();
+      if (z.isNotEmpty) set.add(z);
+    }
+    final list = set.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return list;
+  }
+
+  // ── Filtered All Houses (Search + Selected Zone Filter) ───────────────────
+  List<EbRecord> _getFilteredAllRecords() {
+    final base = _isSearching ? _searchedAllRecords : _allRecords;
+    if (_selectedZoneFilter == 'All') return base;
+    return base
+        .where((r) => r.zone.trim().toLowerCase() == _selectedZoneFilter.trim().toLowerCase())
+        .toList();
+  }
+
+  // ── Group Records by Zone ────────────────────────────────────────────────
+  Map<String, List<EbRecord>> _groupRecordsByZone(List<EbRecord> records) {
+    final Map<String, List<EbRecord>> groups = {};
+    for (final rec in records) {
+      final z = rec.zone.trim().isNotEmpty ? rec.zone.trim() : 'General';
+      if (!groups.containsKey(z)) {
+        groups[z] = [];
+      }
+      groups[z]!.add(rec);
+    }
+    return groups;
   }
 
   // ── Schedule Tab Date Filter Logic ────────────────────────────────────────
@@ -648,8 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ── Build Method ──────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final displayedAll =
-        _isSearching ? _searchedAllRecords : _allRecords;
+    final displayedAll = _getFilteredAllRecords();
     final displayedScheduled = _getFilteredScheduledRecords();
 
     return Scaffold(
@@ -750,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: _selectedTab == 0
-                    ? 'Search all houses, EB #, or address...'
+                    ? 'Search EB #, Name, Zone, or Address...'
                     : 'Search scheduled visits...',
                 hintStyle: TextStyle(
                   fontSize: 13.5,
@@ -901,78 +940,215 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Tab 1: All Houses View ────────────────────────────────────────────────
+  // ── Tab 1: All Houses View (Zone-Wise Grouped + Zone Filter Pills) ───────────
   Widget _buildAllHousesTab(List<EbRecord> records) {
-    if (records.isEmpty) {
-      return _buildEmptyState(
-        isScheduleTab: false,
-        title: _isSearching
-            ? 'No houses match "${_searchController.text}"'
-            : 'No EB Records Saved Yet',
-        subtitle: _isSearching
-            ? 'Try searching by a different EB number, consumer name, or address.'
-            : 'Tap "Register" at the top right to register your first house with GPS coordinates.',
-        buttonLabel: _isSearching ? 'Clear Search' : 'Register First House',
-        onButtonPressed: () {
-          if (_isSearching) {
-            _searchController.clear();
-            _onSearchChanged('');
-          } else {
-            _openAddRecord();
-          }
-        },
-      );
-    }
+    final uniqueZones = _getUniqueZones();
+    final grouped = _groupRecordsByZone(records);
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 4, bottom: 24),
-      itemCount: records.length + 1,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-            child: Row(
-              children: [
-                Text(
-                  _isSearching
-                      ? 'Search Results (${records.length})'
-                      : 'All Service Locations (${records.length})',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-                const Spacer(),
-                if (_isSearching)
-                  InkWell(
-                    onTap: () {
+    return Column(
+      children: [
+        // ── Zone Filter Chips Bar (Visible when 1 or more zones exist) ────────
+        if (uniqueZones.isNotEmpty)
+          _buildZoneFilterBar(uniqueZones),
+
+        // ── Main Content Area ────────────────────────────────────────────────
+        Expanded(
+          child: records.isEmpty
+              ? _buildEmptyState(
+                  isScheduleTab: false,
+                  title: _isSearching
+                      ? 'No houses match "${_searchController.text}"'
+                      : (_selectedZoneFilter != 'All'
+                          ? 'No houses in "$_selectedZoneFilter"'
+                          : 'No EB Records Saved Yet'),
+                  subtitle: _isSearching
+                      ? 'Try searching by EB number, consumer name, address, or zone.'
+                      : (_selectedZoneFilter != 'All'
+                          ? 'Tap "All Zones" to view all houses or register a house in this zone.'
+                          : 'Tap "Add" at the top right to register your first house with GPS coordinates.'),
+                  buttonLabel: _isSearching
+                      ? 'Clear Search'
+                      : (_selectedZoneFilter != 'All' ? 'View All Zones' : 'Register First House'),
+                  onButtonPressed: () {
+                    if (_isSearching) {
                       _searchController.clear();
                       _onSearchChanged('');
-                    },
-                    child: const Text(
-                      'Clear',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1565C0),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        }
+                    } else if (_selectedZoneFilter != 'All') {
+                      setState(() => _selectedZoneFilter = 'All');
+                    } else {
+                      _openAddRecord();
+                    }
+                  },
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 2, bottom: 24),
+                  itemCount: grouped.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 6),
+                        child: Row(
+                          children: [
+                            Text(
+                              _isSearching
+                                  ? 'Search Results (${records.length})'
+                                  : (_selectedZoneFilter != 'All'
+                                      ? 'Zone: $_selectedZoneFilter (${records.length})'
+                                      : 'All Service Locations (${records.length})'),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_isSearching)
+                              InkWell(
+                                onTap: () {
+                                  _searchController.clear();
+                                  _onSearchChanged('');
+                                },
+                                child: const Text(
+                                  'Clear',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1565C0),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    }
 
-        final record = records[index - 1];
-        return RecordCard(
-          record: record,
-          index: index - 1,
-          onDeleted: _loadAllData,
-          onScheduleUpdated: _loadAllData,
-          onRecordUpdated: _loadAllData,
-        );
-      },
+                    final zoneName = grouped.keys.elementAt(index - 1);
+                    final zoneRecords = grouped[zoneName]!;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Zone Section Header
+                        _buildZoneSectionHeader(zoneName, zoneRecords.length),
+
+                        // House Cards under this Zone
+                        ...zoneRecords.asMap().entries.map(
+                          (entry) => RecordCard(
+                            record: entry.value,
+                            index: entry.key,
+                            onDeleted: _loadAllData,
+                            onScheduleUpdated: _loadAllData,
+                            onRecordUpdated: _loadAllData,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // ── Zone Filter Chips Bar inside All Houses Tab ───────────────────────────
+  Widget _buildZoneFilterBar(List<String> zones) {
+    return Container(
+      height: 40,
+      margin: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          // "All Zones" Chip
+          _ZoneChip(
+            label: 'All Zones',
+            count: _allRecords.length,
+            isSelected: _selectedZoneFilter == 'All',
+            onTap: () {
+              if (_selectedZoneFilter != 'All') {
+                HapticFeedback.selectionClick();
+                setState(() => _selectedZoneFilter = 'All');
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+
+          // Individual Zone Chips
+          ...zones.map((z) {
+            final count = _allRecords.where((r) => r.zone.trim().toLowerCase() == z.toLowerCase()).length;
+            final isSelected = _selectedZoneFilter.toLowerCase() == z.toLowerCase();
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _ZoneChip(
+                label: z,
+                count: count,
+                isSelected: isSelected,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _selectedZoneFilter = isSelected ? 'All' : z;
+                  });
+                },
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ── Zone Section Header in All Houses List ───────────────────────────────
+  Widget _buildZoneSectionHeader(String zoneName, int count) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.layers_rounded,
+              size: 14,
+              color: Color(0xFF1565C0),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              zoneName,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1565C0),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count ${count == 1 ? "House" : "Houses"}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1518,6 +1694,96 @@ class _FilterChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Horizontal Zone Filter Chip ─────────────────────────────────────────────
+class _ZoneChip extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ZoneChip({
+    required this.label,
+    required this.count,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF0D47A1) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF0D47A1) : const Color(0xFFCBD5E1),
+              width: isSelected ? 1.4 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF0D47A1).withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.layers_rounded,
+                size: 14,
+                color: isSelected ? Colors.white : const Color(0xFF64748B),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.22)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : const Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -16,6 +16,7 @@ const {
   searchRecords,
   getLatestRecords,
   deleteRecord,
+  getZones,
 } = require('../controllers/ebController');
 
 // All EB Records routes require authenticated user session
@@ -92,7 +93,10 @@ router.get('/scheduled', getScheduledRecords);
 // GET  /api/eb-records/search?query=07-123
 router.get('/search', searchRecords);
 
-// GET  /api/eb-records  — latest 50
+// GET  /api/eb-records/zones  — distinct zones registered by this user
+router.get('/zones', getZones);
+
+// GET  /api/eb-records  — latest records (supports ?zone=)
 router.get('/', getLatestRecords);
 
 // POST /api/eb-records  — create unique record

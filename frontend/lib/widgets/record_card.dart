@@ -405,6 +405,39 @@ class _RecordCardState extends State<RecordCard> {
               ),
             ],
 
+            // 3. Zone Badge
+            if (record.zone.isNotEmpty && record.zone != 'General') ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.layers_rounded, size: 10.5, color: Color(0xFF475569)),
+                    const SizedBox(width: 3),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 80),
+                      child: Text(
+                        record.zone,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const Spacer(),
 
             // 3. Quick Call Icon (One-click direct phone call)
@@ -551,6 +584,39 @@ class _RecordCardState extends State<RecordCard> {
         const SizedBox(height: 12),
         const Divider(height: 1, thickness: 0.8, color: Color(0xFFE2E8F0)),
         const SizedBox(height: 12),
+
+        // ── Zone / Sector ────────────────────────────────────────────────────
+        Row(
+          children: [
+            const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF0D47A1)),
+            const SizedBox(width: 6),
+            const Text(
+              'Zone / Sector: ',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Text(
+                record.zone.isNotEmpty ? record.zone : 'General',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1D4ED8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
 
         // ── Full Street Address ──────────────────────────────────────────────
         if (record.address.isNotEmpty) ...[

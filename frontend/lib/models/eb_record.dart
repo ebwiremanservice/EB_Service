@@ -2,6 +2,7 @@ library;
 
 class EbRecord {
   final String? id;
+  final String zone;
   final String ebNumber;
   final String consumerName;
   final String mobileNumber;
@@ -16,6 +17,7 @@ class EbRecord {
 
   const EbRecord({
     this.id,
+    this.zone = 'General',
     required this.ebNumber,
     this.consumerName = '',
     this.mobileNumber = '',
@@ -60,6 +62,7 @@ class EbRecord {
 
     return EbRecord(
       id: json['_id'] as String?,
+      zone: json['zone'] as String? ?? 'General',
       ebNumber: json['ebNumber'] as String? ?? '',
       consumerName: json['consumerName'] as String? ?? '',
       mobileNumber: json['mobileNumber'] as String? ?? '',
@@ -82,6 +85,7 @@ class EbRecord {
 
   // ── Serialise to JSON (for POST / PUT request body) ──────────────────────
   Map<String, dynamic> toJson() => {
+        'zone': zone,
         'ebNumber': ebNumber,
         'consumerName': consumerName,
         'mobileNumber': mobileNumber,
@@ -96,6 +100,7 @@ class EbRecord {
 
   EbRecord copyWith({
     String? id,
+    String? zone,
     String? ebNumber,
     String? consumerName,
     String? mobileNumber,
@@ -110,6 +115,7 @@ class EbRecord {
   }) {
     return EbRecord(
       id: id ?? this.id,
+      zone: zone ?? this.zone,
       ebNumber: ebNumber ?? this.ebNumber,
       consumerName: consumerName ?? this.consumerName,
       mobileNumber: mobileNumber ?? this.mobileNumber,
@@ -126,5 +132,5 @@ class EbRecord {
 
   @override
   String toString() =>
-      'EbRecord(ebNumber: $ebNumber, lat: $latitude, lng: $longitude, scheduled: $scheduledDate)';
+      'EbRecord(zone: $zone, ebNumber: $ebNumber, lat: $latitude, lng: $longitude, scheduled: $scheduledDate)';
 }
