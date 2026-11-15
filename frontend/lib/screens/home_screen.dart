@@ -398,84 +398,47 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Quota / Subscription Card
+              // Account Statistics Card
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 decoration: BoxDecoration(
-                  color: isLimitReached
-                      ? const Color(0xFFFFFBEB)
-                      : const Color(0xFFF1F5F9),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isLimitReached
-                        ? const Color(0xFFFDE68A)
-                        : const Color(0xFFE2E8F0),
-                  ),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              isLimitReached
-                                  ? Icons.warning_amber_rounded
-                                  : Icons.home_work_rounded,
-                              size: 18,
-                              color: isLimitReached
-                                  ? const Color(0xFFD97706)
-                                  : const Color(0xFF0D47A1),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Free Plan Quota',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '$houseCount / 10 Used',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isLimitReached
-                                ? const Color(0xFFD97706)
-                                : const Color(0xFF0D47A1),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: (houseCount / 10).clamp(0.0, 1.0),
-                        minHeight: 7,
-                        backgroundColor: Colors.grey.shade300,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          isLimitReached
-                              ? const Color(0xFFE53935)
-                              : const Color(0xFF0D47A1),
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D47A1).withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(Icons.home_work_rounded, size: 20, color: Color(0xFF0D47A1)),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isLimitReached
-                          ? 'You have reached your 10 free house limit.'
-                          : '${10 - houseCount} free house registrations remaining.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isLimitReached
-                            ? const Color(0xFFB45309)
-                            : Colors.grey.shade600,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Service Locations',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$houseCount ${houseCount == 1 ? "House" : "Houses"} Registered',
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -822,41 +785,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // ── 2 Main Tabs: "All Houses" & "Schedule" ───────────────────────────
         _buildTwoTabsBar(),
-
-        // ── Quota Alert Banner (Shown when 10/10 free houses used) ───────────
-        if (_allRecords.length >= 10)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: InkWell(
-              onTap: _showUpgradeInfoDialog,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.bolt_rounded, size: 18, color: Color(0xFFD97706)),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Free plan limit reached (10/10). Tap to learn about Pro.',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF92400E),
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFD97706)),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
         // ── Tab Content Area ─────────────────────────────────────────────────
         Expanded(

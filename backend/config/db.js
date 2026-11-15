@@ -32,7 +32,8 @@ const connectDB = async () => {
 
   try {
     const conn = await mongoose.connect(uri, {
-      // These options prevent deprecation warnings with Mongoose 7+
+      maxPoolSize: 15,                 // Optimal pool size for Free Tier MongoDB Atlas
+      minPoolSize: 2,                  // Minimum persistent sockets
       serverSelectionTimeoutMS: 5000,  // Timeout after 5 s
       socketTimeoutMS: 45000,          // Close sockets after 45 s of inactivity
     });

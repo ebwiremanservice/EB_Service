@@ -317,30 +317,6 @@ class _AuthScreenState extends State<AuthScreen> {
           },
         ),
 
-        const SizedBox(height: 22),
-
-        // Free tier highlight box
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFBFDBFE)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.bolt_rounded, color: Color(0xFF2563EB), size: 20),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '⚡ Free Tier: First 10 house registrations are 100% free with cloud backup.',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8)),
-                ),
-              ),
-            ],
-          ),
-        ),
-
         const SizedBox(height: 24),
 
         // Send OTP Button

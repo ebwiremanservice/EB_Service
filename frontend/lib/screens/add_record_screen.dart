@@ -315,28 +315,42 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         title: const Row(
           children: [
-            Icon(Icons.workspace_premium_rounded, color: Color(0xFFF59E0B), size: 28),
+            Icon(Icons.receipt_long_rounded, color: Color(0xFF0D47A1), size: 28),
             SizedBox(width: 10),
-            Text('Free Tier Limit Reached', style: TextStyle(fontSize: 18)),
+            Text('Subscription Bill', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'You have reached the maximum 10 houses on the Free Tier.',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFC7D2FE)),
+              ),
+              child: const Column(
+                children: [
+                  Text('Annual Wireman Plan', style: TextStyle(fontSize: 13, color: Color(0xFF4338CA), fontWeight: FontWeight.w600)),
+                  SizedBox(height: 4),
+                  Text('₹799 / Year', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E1B4B))),
+                  SizedBox(height: 2),
+                  Text('Unlimited meters • Cloud Sync • Backup', style: TextStyle(fontSize: 11.5, color: Color(0xFF6366F1))),
+                ],
+              ),
             ),
-            SizedBox(height: 10),
-            Text(
-              'Upgrade to the Yearly Unlimited Plan for ₹799/year to register and manage unlimited EB house locations across your devices.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+            const SizedBox(height: 14),
+            const Text(
+              'Your initial meter registration quota is complete. To continue adding new houses, please activate your annual plan.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
             ),
-            SizedBox(height: 12),
-            Text(
-              '⚡ Payment integration will be enabled shortly. Your current houses remain fully active.',
-              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFFB45309)),
+            const SizedBox(height: 10),
+            const Text(
+              '⚡ Online payment gateway integration will be active shortly. Contact admin for instant manual activation.',
+              style: TextStyle(fontSize: 11.5, color: Color(0xFFB45309), fontStyle: FontStyle.italic),
             ),
           ],
         ),
@@ -345,16 +359,17 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
-          FilledButton(
+          FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1565C0),
+              backgroundColor: const Color(0xFF0D47A1),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
               Navigator.pop(context);
-              _showSnack('Payment activation will be enabled soon.', isError: false);
+              _showSnack('Payment gateway will be available soon.', isError: false);
             },
-            child: const Text('Upgrade (₹799/Year)'),
+            icon: const Icon(Icons.payment_rounded, size: 18),
+            label: const Text('Pay Bill (₹799/Year)'),
           ),
         ],
       ),
