@@ -59,26 +59,23 @@ class CurvedHeader extends StatelessWidget {
                   // App Logo / Custom Leading
                   leading ??
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 46,
+                        height: 46,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            width: 1.8,
-                          ),
+                          borderRadius: BorderRadius.circular(13),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: ClipOval(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(13),
                           child: Image.asset(
-                            'assets/logo/app_logo.png',
-                            fit: BoxFit.cover,
+                            'assets/logo/new_logo.png',
+                            fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => Container(
                               color: Colors.white.withValues(alpha: 0.2),
                               child: const Icon(

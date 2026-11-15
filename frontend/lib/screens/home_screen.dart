@@ -584,7 +584,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'EB Houses Pro',
+              'Wireman service Pro',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,

@@ -33,7 +33,7 @@ class AuthService {
   // ─────────────────────────────────────────────────────────────────────────
   // Send OTP code to email
   // ─────────────────────────────────────────────────────────────────────────
-  static Future<void> sendOtp(String email, {String? name}) async {
+  static Future<String?> sendOtp(String email, {String? name}) async {
     final baseUrl = ApiService.baseUrl;
     try {
       final response = await http
@@ -50,7 +50,7 @@ class AuthService {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode == 200 && body['success'] == true) {
-        return;
+        return body['otp'] as String?;
       }
 
       throw ApiException(

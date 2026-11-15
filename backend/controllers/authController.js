@@ -57,12 +57,15 @@ exports.sendOtp = async (req, res) => {
 
     await user.save();
 
-    // Send email via Nodemailer
-    await emailService.sendOtpEmail(cleanEmail, otpCode, user.name);
+    // Send email via emailService (HTTP API or SMTP, with graceful fallback)
+    const emailResult = await emailService.sendOtpEmail(cleanEmail, otpCode, user.name);
 
     return res.status(200).json({
       success: true,
-      message: `Verification code sent to ${cleanEmail}. Please check your inbox or spam folder.`,
+      message: emailResult.delivered
+        ? `Verification code sent to ${cleanEmail}. Please check your inbox or spam folder.`
+        : `Verification code: ${otpCode} (Notice: Cloud free tier blocked outbound SMTP; code logged in console)`,
+      otp: emailResult.delivered ? undefined : otpCode,
     });
   } catch (error) {
     console.error('[sendOtp]', error);

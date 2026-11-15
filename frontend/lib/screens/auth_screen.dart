@@ -54,7 +54,7 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService.sendOtp(
+      final fallbackOtp = await AuthService.sendOtp(
         _emailController.text.trim(),
         name: _nameController.text.trim(),
       );
@@ -64,8 +64,13 @@ class _AuthScreenState extends State<AuthScreen> {
           _isOtpSent = true;
           _isLoading = false;
         });
+        if (fallbackOtp != null && fallbackOtp.isNotEmpty) {
+          _otpController.text = fallbackOtp;
+          _showSnack('Cloud fallback: Verification code $fallbackOtp (auto-filled)', isError: false);
+        } else {
+          _showSnack('Verification code sent! Please check your email inbox or spam.', isError: false);
+        }
         _startResendTimer();
-        _showSnack('Verification code sent! Please check your email inbox or spam.', isError: false);
       }
     } on ApiException catch (e) {
       if (mounted) {
@@ -167,23 +172,23 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                 children: [
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 84,
+                    height: 84,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2.5),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: ClipOval(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
                       child: Image.asset(
-                        'assets/logo/app_logo.png',
-                        fit: BoxFit.cover,
+                        'assets/logo/new_logo.png',
+                        fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.white24,
                           child: const Icon(Icons.bolt_rounded, color: Colors.amber, size: 40),
@@ -193,7 +198,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 14),
                   const Text(
-                    'EB Houses',
+                    'Wireman service',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 26,

@@ -36,7 +36,7 @@
     </queries>
 
     <application
-        android:label="EB Houses"
+        android:label="Wireman service"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

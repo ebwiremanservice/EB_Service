@@ -48,7 +48,7 @@ class _EbWiremanAppState extends State<EbWiremanApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EB Houses',
+      title: 'Wireman service',
       debugShowCheckedModeBanner: false,
 
       // ── Modern Light Theme ───────────────────────────────────────────
