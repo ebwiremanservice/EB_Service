@@ -11,6 +11,7 @@ import '../services/location_service.dart';
 import '../widgets/curved_header.dart';
 import '../widgets/record_card.dart';
 import 'add_record_screen.dart';
+import 'profile_screen.dart';
 
 enum ScheduleDateFilter { all, today, tomorrow, custom }
 
@@ -711,7 +712,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: _showProfileSheet,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProfileScreen(
+                            onLogout: () {
+                              if (widget.onLogout != null) widget.onLogout!();
+                            },
+                          ),
+                        ),
+                      ).then((_) {
+                        _loadRecords();
+                        _loadZones();
+                      });
+                    },
                     borderRadius: BorderRadius.circular(22),
                     child: Container(
                       width: 36,

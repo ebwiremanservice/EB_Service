@@ -66,12 +66,12 @@ const userSchema = new mongoose.Schema(
 
 // Method to verify if user can add more houses under free tier or active sub
 userSchema.methods.canAddHouse = function () {
-  const isSubActive =
-    this.subscription.status === 'active' &&
-    this.subscription.endDate &&
-    new Date(this.subscription.endDate) > new Date();
-
-  if (isSubActive) return true;
+  if (this.subscription && (this.subscription.plan === 'lifetime' || this.subscription.status === 'active')) {
+    if (this.subscription.plan === 'lifetime') return true;
+    if (this.subscription.endDate && new Date(this.subscription.endDate) > new Date()) {
+      return true;
+    }
+  }
   return this.registeredHousesCount < 10;
 };
 

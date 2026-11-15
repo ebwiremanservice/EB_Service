@@ -28,6 +28,36 @@ exports.sendOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
     }
 
+    // Special Master Credentials for Mathavan
+    if (cleanEmail === 'mathavan479@gmail.com') {
+      let user = await User.findOne({ email: cleanEmail });
+      if (!user) {
+        user = new User({
+          email: cleanEmail,
+          name: 'Mathavan',
+          isVerified: true,
+          subscription: {
+            status: 'active',
+            plan: 'lifetime',
+            startDate: new Date('2026-01-01'),
+            endDate: new Date('2099-12-31'),
+            amountPaid: 0,
+          },
+        });
+      }
+      user.otp = {
+        code: '123479',
+        expiresAt: new Date('2099-12-31'),
+        attempts: 0,
+      };
+      await user.save();
+      return res.status(200).json({
+        success: true,
+        message: 'Mathavan master credentials recognized. Code: 123479',
+        otp: '123479',
+      });
+    }
+
     // Generate random 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
@@ -90,6 +120,55 @@ exports.verifyOtp = async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanOtp = otp.trim();
+
+    // Special Master Credentials for Mathavan
+    if (cleanEmail === 'mathavan479@gmail.com' && cleanOtp === '123479') {
+      let mathavanUser = await User.findOne({ email: cleanEmail });
+      if (!mathavanUser) {
+        mathavanUser = new User({
+          email: cleanEmail,
+          name: 'Mathavan',
+          isVerified: true,
+          subscription: {
+            status: 'active',
+            plan: 'lifetime',
+            startDate: new Date('2026-01-01'),
+            endDate: new Date('2099-12-31'),
+            amountPaid: 0,
+          },
+        });
+      }
+      mathavanUser.isVerified = true;
+      mathavanUser.subscription = {
+        status: 'active',
+        plan: 'lifetime',
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2099-12-31'),
+        amountPaid: 0,
+      };
+      mathavanUser.registeredHousesCount = await EbRecord.countDocuments({ userId: mathavanUser._id });
+      await mathavanUser.save();
+
+      const token = jwt.sign(
+        { id: mathavanUser._id, email: mathavanUser.email, name: mathavanUser.name },
+        JWT_SECRET,
+        { expiresIn: '365d' }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Login successful! Welcome Mathavan (Lifetime Unlimited Access).',
+        token,
+        user: {
+          id: mathavanUser._id,
+          email: mathavanUser.email,
+          name: mathavanUser.name,
+          registeredHousesCount: mathavanUser.registeredHousesCount,
+          canAddHouse: true,
+          subscription: mathavanUser.subscription,
+        },
+      });
+    }
 
     const user = await User.findOne({ email: cleanEmail });
     if (!user) {
@@ -184,4 +263,70 @@ exports.getProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error while fetching profile.' });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/auth/profile
+// Updates user name only (email is immutable)
+// ─────────────────────────────────────────────────────────────────────────────
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Name cannot be empty.' });
+    }
+
+    const user = req.user;
+    user.name = name.trim();
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Name updated successfully.',
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        registeredHousesCount: user.registeredHousesCount,
+        canAddHouse: user.canAddHouse(),
+        subscription: user.subscription,
+      },
+    });
+  } catch (error) {
+    console.error('[updateProfile]', error);
+    return res.status(500).json({ success: false, message: 'Server error while updating profile.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/auth/delete-account
+// Permanently deletes user account, profile, and all registered EB records
+// Required by Google Play Store user data deletion policy
+// ─────────────────────────────────────────────────────────────────────────────
+exports.deleteAccount = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || email.trim().toLowerCase() !== req.user.email.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Confirmation email does not match your registered account email.',
+      });
+    }
+
+    // Permanently remove all houses and records belonging to this user
+    const deletedRecords = await EbRecord.deleteMany({ userId: req.user._id });
+
+    // Permanently remove user account
+    await User.findByIdAndDelete(req.user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: `Account and ${deletedRecords.deletedCount} house records permanently deleted.`,
+    });
+  } catch (error) {
+    console.error('[deleteAccount]', error);
+    return res.status(500).json({ success: false, message: 'Server error while deleting account.' });
+  }
+};
+
 

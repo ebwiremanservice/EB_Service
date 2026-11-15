@@ -353,6 +353,111 @@ exports.getZones = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/eb-records/zones-summary
+// Returns list of unique zones with their house counts: [{ name, count }]
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getZonesSummary = async (req, res) => {
+  try {
+    const summary = await EbRecord.aggregate([
+      { $match: { userId: req.user._id } },
+      {
+        $group: {
+          _id: { $ifNull: ['$zone', 'General'] },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const data = summary.map((item) => ({
+      name: item._id || 'General',
+      count: item.count,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    console.error('[getZonesSummary]', error);
+    return res.status(500).json({ success: false, message: 'Server error while fetching zones summary.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/eb-records/zones/rename
+// Renames a zone across all houses for this user
+// ─────────────────────────────────────────────────────────────────────────────
+exports.renameZone = async (req, res) => {
+  try {
+    const { oldZone, newZone } = req.body;
+    if (!oldZone || !oldZone.trim() || !newZone || !newZone.trim()) {
+      return res.status(400).json({ success: false, message: 'Both oldZone and newZone are required.' });
+    }
+
+    const cleanOld = oldZone.trim();
+    const cleanNew = newZone.trim();
+
+    const result = await EbRecord.updateMany(
+      { userId: req.user._id, zone: cleanOld },
+      { $set: { zone: cleanNew } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Zone renamed from "${cleanOld}" to "${cleanNew}" for ${result.modifiedCount} house(s).`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error('[renameZone]', error);
+    return res.status(500).json({ success: false, message: 'Server error while renaming zone.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/eb-records/zones
+// Deletes a zone: either reassigns houses to 'General' (deleteHouses: false) or deletes all houses (deleteHouses: true)
+// ─────────────────────────────────────────────────────────────────────────────
+exports.deleteZone = async (req, res) => {
+  try {
+    const { zone, deleteHouses } = req.body;
+    if (!zone || !zone.trim()) {
+      return res.status(400).json({ success: false, message: 'Zone name is required.' });
+    }
+
+    const cleanZone = zone.trim();
+
+    if (deleteHouses === true || deleteHouses === 'true') {
+      const delResult = await EbRecord.deleteMany({ userId: req.user._id, zone: cleanZone });
+      const newCount = await EbRecord.countDocuments({ userId: req.user._id });
+      await User.findByIdAndUpdate(req.user._id, { registeredHousesCount: newCount });
+
+      return res.status(200).json({
+        success: true,
+        message: `Zone "${cleanZone}" and ${delResult.deletedCount} house(s) permanently deleted.`,
+        deletedCount: delResult.deletedCount,
+        remainingHousesCount: newCount,
+      });
+    } else {
+      const updResult = await EbRecord.updateMany(
+        { userId: req.user._id, zone: cleanZone },
+        { $set: { zone: 'General' } }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: `Zone "${cleanZone}" removed. ${updResult.modifiedCount} house(s) moved to "General".`,
+        modifiedCount: updResult.modifiedCount,
+      });
+    }
+  } catch (error) {
+    console.error('[deleteZone]', error);
+    return res.status(500).json({ success: false, message: 'Server error while deleting zone.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/eb-records
 // Returns the records for this user (supports optional ?zone= filter)
 // ─────────────────────────────────────────────────────────────────────────────

@@ -227,6 +227,75 @@ class ApiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/eb-records/zones-summary — zones with house counts
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<List<Map<String, dynamic>>> fetchZonesSummary() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$_baseUrl/eb-records/zones-summary'), headers: _headers)
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = body['data'] as List<dynamic>?;
+        if (list == null) return [];
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PUT /api/eb-records/zones/rename — rename a zone across all houses
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<void> renameZone(String oldZone, String newZone) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_baseUrl/eb-records/zones/rename'),
+            headers: _headers,
+            body: jsonEncode({'oldZone': oldZone.trim(), 'newZone': newZone.trim()}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>?;
+        throw ApiException(body?['message'] as String? ?? 'Failed to rename zone.');
+      }
+    } on SocketException {
+      throw const ApiException('No internet connection or server is unreachable.');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DELETE /api/eb-records/zones — delete zone (keep or delete houses)
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<void> deleteZone(String zone, {required bool deleteHouses}) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_baseUrl/eb-records/zones'),
+            headers: _headers,
+            body: jsonEncode({'zone': zone.trim(), 'deleteHouses': deleteHouses}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>?;
+        throw ApiException(body?['message'] as String? ?? 'Failed to delete zone.');
+      }
+    } on SocketException {
+      throw const ApiException('No internet connection or server is unreachable.');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // GET /api/eb-records  — latest records (supports optional zone filter)
   // ─────────────────────────────────────────────────────────────────────────
   static Future<List<EbRecord>> fetchLatestRecords({String? zone}) async {

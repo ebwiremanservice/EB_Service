@@ -11,6 +11,7 @@ const compression = require('compression');
 const rateLimit   = require('express-rate-limit');
 
 const connectDB    = require('./config/db');
+const seedMathavan = require('./config/seedMathavan');
 const authRoutes   = require('./routes/authRoutes');
 const ebRoutes     = require('./routes/ebRoutes');
 const errorHandler = require('./middleware/errorHandler');
@@ -63,6 +64,7 @@ app.use(errorHandler);
 // ─── Start Server ────────────────────────────────────────────────────────────
 const startServer = async () => {
   await connectDB();
+  await seedMathavan();
   app.listen(PORT, () => {
     console.log(`🚀  Server running on http://localhost:${PORT}`);
   });

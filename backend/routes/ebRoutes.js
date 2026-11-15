@@ -17,6 +17,9 @@ const {
   getLatestRecords,
   deleteRecord,
   getZones,
+  getZonesSummary,
+  renameZone,
+  deleteZone,
 } = require('../controllers/ebController');
 
 // All EB Records routes require authenticated user session
@@ -95,6 +98,15 @@ router.get('/search', searchRecords);
 
 // GET  /api/eb-records/zones  — distinct zones registered by this user
 router.get('/zones', getZones);
+
+// GET  /api/eb-records/zones-summary  — zones with house counts
+router.get('/zones-summary', getZonesSummary);
+
+// PUT  /api/eb-records/zones/rename  — rename zone across all houses
+router.put('/zones/rename', renameZone);
+
+// DELETE /api/eb-records/zones  — delete zone (keep or delete houses)
+router.delete('/zones', deleteZone);
 
 // GET  /api/eb-records  — latest records (supports ?zone=)
 router.get('/', getLatestRecords);

@@ -54,7 +54,7 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final fallbackOtp = await AuthService.sendOtp(
+      await AuthService.sendOtp(
         _emailController.text.trim(),
         name: _nameController.text.trim(),
       );
@@ -64,13 +64,8 @@ class _AuthScreenState extends State<AuthScreen> {
           _isOtpSent = true;
           _isLoading = false;
         });
-        if (fallbackOtp != null && fallbackOtp.isNotEmpty) {
-          _otpController.text = fallbackOtp;
-          _showSnack('Cloud fallback: Verification code $fallbackOtp (auto-filled)', isError: false);
-        } else {
-          _showSnack('Verification code sent! Please check your email inbox or spam.', isError: false);
-        }
         _startResendTimer();
+        _showSnack('Verification code sent! Please check your email inbox or spam.', isError: false);
       }
     } on ApiException catch (e) {
       if (mounted) {
@@ -175,20 +170,20 @@ class _AuthScreenState extends State<AuthScreen> {
                     width: 84,
                     height: 84,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       child: Image.asset(
-                        'assets/logo/new_logo.png',
-                        fit: BoxFit.contain,
+                        'assets/logo/app_logo.png',
+                        fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.white24,
                           child: const Icon(Icons.bolt_rounded, color: Colors.amber, size: 40),
@@ -221,7 +216,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
             // ── Form Card ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 36),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: Form(
                 key: _formKey,
                 child: Container(
@@ -244,6 +239,100 @@ class _AuthScreenState extends State<AuthScreen> {
                     firstChild: _buildEmailStep(),
                     secondChild: _buildOtpStep(),
                   ),
+                ),
+              ),
+            ),
+
+            // ── Terms & Privacy Footer Link ─────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: InkWell(
+                onTap: _openTermsAndPrivacy,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text.rich(
+                    TextSpan(
+                      text: 'By continuing, you agree to our\n',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                      children: [
+                        TextSpan(
+                          text: 'Terms of Service',
+                          style: TextStyle(color: const Color(0xFF0D47A1), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+                        ),
+                        const TextSpan(text: ' & '),
+                        TextSpan(
+                          text: 'Privacy Policy',
+                          style: TextStyle(color: const Color(0xFF0D47A1), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openTermsAndPrivacy() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                'Terms of Service & Privacy Policy',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+            ),
+            const Divider(height: 1),
+            const Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('1. Privacy Policy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D47A1))),
+                    SizedBox(height: 8),
+                    Text(
+                      '• We collect your email address solely to sync electricity meter locations across your devices.\n'
+                      '• Location coordinates are used only to navigate wiremen to customer meter boxes.\n'
+                      '• We do not sell or share any user or consumer information with third parties.\n'
+                      '• In accordance with Google Play User Data Policy, you may permanently delete your account and all stored records at any time from your profile screen.',
+                      style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
+                    ),
+                    SizedBox(height: 20),
+                    Text('2. Terms of Service', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D47A1))),
+                    SizedBox(height: 8),
+                    Text(
+                      '• Wireman Service is designed for electrical field personnel to organize meter coordinates.\n'
+                      '• Field workers are responsible for verifying physical meter locations safely.\n'
+                      '• Lifetime Unlimited access is provided to authorized staff.\n'
+                      '• For support and inquiries, contact us at: ebwiremanservice@gmail.com',
+                      style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
+                    ),
+                    SizedBox(height: 30),
+                  ],
                 ),
               ),
             ),
