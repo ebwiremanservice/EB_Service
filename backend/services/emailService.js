@@ -218,15 +218,20 @@ exports.sendOtpEmail = async (toEmail, otpCode, userName = 'Wireman') => {
     }
   }
 
-  // Strategy 4: Fallback Dev / Cloud Mode (Logs OTP so login never blocks)
-  console.log(`\n========================================`);
-  console.log(`🔑 [WIREMAN SERVICE OTP] For ${toEmail}: ${otpCode}`);
-  console.log(`========================================\n`);
+  // Strategy 4: Fallback Dev Mode (Only active outside production)
+  const isProd = process.env.NODE_ENV === 'production';
+  if (!isProd) {
+    console.log(`\n========================================`);
+    console.log(`🔑 [DEV OTP] For ${toEmail}: ${otpCode}`);
+    console.log(`========================================\n`);
+  } else {
+    console.warn(`[emailService] All email delivery providers failed for ${toEmail}.`);
+  }
 
   return {
-    success: true,
+    success: !isProd,
     delivered: false,
     provider: 'fallback',
-    fallbackOtp: otpCode,
+    fallbackOtp: isProd ? undefined : otpCode,
   };
 };

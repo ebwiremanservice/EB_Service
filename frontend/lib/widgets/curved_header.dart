@@ -13,7 +13,7 @@ class CurvedHeader extends StatelessWidget {
 
   const CurvedHeader({
     super.key,
-    this.greeting = 'Hi Mathavan 👋',
+    this.greeting = 'Welcome back,',
     this.currentLocation = 'Fetching current location...',
     this.leading,
     this.trailing,

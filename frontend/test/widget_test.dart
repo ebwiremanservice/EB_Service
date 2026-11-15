@@ -4,6 +4,6 @@ import 'package:eb_wireman_app/main.dart';
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const EbWiremanApp());
-    expect(find.text('Hi Mathavan 👋'), findsWidgets);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

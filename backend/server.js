@@ -16,6 +16,13 @@ const authRoutes   = require('./routes/authRoutes');
 const ebRoutes     = require('./routes/ebRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
+// ─── Production Security Validation ──────────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'eb_wireman_secret_key_2026') {
+    console.warn('\n⚠️ [SECURITY WARNING] Default JWT_SECRET detected in production! Please set a strong random JWT_SECRET in your Render dashboard.\n');
+  }
+}
+
 // ─── App Setup ───────────────────────────────────────────────────────────────
 const app  = express();
 const PORT = process.env.PORT || 5000;

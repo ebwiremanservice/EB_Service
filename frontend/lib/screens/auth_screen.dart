@@ -372,7 +372,7 @@ class _AuthScreenState extends State<AuthScreen> {
           controller: _nameController,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            hintText: 'e.g. Mathavan / Wireman',
+            hintText: 'e.g. Wireman / Field Officer',
             prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF1565C0)),
             filled: true,
             fillColor: const Color(0xFFF8FAFC),
@@ -395,7 +395,7 @@ class _AuthScreenState extends State<AuthScreen> {
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
-            hintText: 'e.g. mathavan@gmail.com',
+            hintText: 'e.g. name@example.com',
             prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1565C0)),
             filled: true,
             fillColor: const Color(0xFFF8FAFC),

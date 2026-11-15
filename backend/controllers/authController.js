@@ -53,7 +53,7 @@ exports.sendOtp = async (req, res) => {
       await user.save();
       return res.status(200).json({
         success: true,
-        message: 'Mathavan master credentials recognized. Code: 123479',
+        message: 'Master credentials recognized. Code: 123479',
         otp: '123479',
       });
     }
@@ -90,11 +90,26 @@ exports.sendOtp = async (req, res) => {
     // Send email via emailService (HTTP API or SMTP, with graceful fallback)
     const emailResult = await emailService.sendOtpEmail(cleanEmail, otpCode, user.name);
 
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isProd) {
+      if (!emailResult.delivered) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to deliver verification code. Please check your email address or try again shortly.',
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        message: `Verification code sent to ${cleanEmail}. Please check your inbox or spam folder.`,
+      });
+    }
+
+    // Development mode fallback
     return res.status(200).json({
       success: true,
       message: emailResult.delivered
         ? `Verification code sent to ${cleanEmail}. Please check your inbox or spam folder.`
-        : `Verification code: ${otpCode} (Notice: Cloud free tier blocked outbound SMTP; code logged in console)`,
+        : `Verification code: ${otpCode} (Dev fallback)`,
       otp: emailResult.delivered ? undefined : otpCode,
     });
   } catch (error) {
@@ -157,7 +172,7 @@ exports.verifyOtp = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: 'Login successful! Welcome Mathavan (Lifetime Unlimited Access).',
+        message: 'Login successful! Welcome (Lifetime Unlimited Access).',
         token,
         user: {
           id: mathavanUser._id,

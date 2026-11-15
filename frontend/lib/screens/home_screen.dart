@@ -661,7 +661,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // ── Curved Top Header with Greeting, Location & Register Button ────
           CurvedHeader(
-            greeting: 'Hi ${AuthService.userName} 👋',
+            greeting: 'Hi ${AuthService.userName} ',
             currentLocation: _currentLocationText,
             onRefreshLocation: _detectCurrentLocation,
             trailing: Row(
