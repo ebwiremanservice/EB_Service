@@ -28,15 +28,15 @@ const app  = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Free-Tier Rate Limiting & Protection ────────────────────────────────────
-// Prevents API exhaustion and protects MongoDB Atlas Free Tier from overuse
+// Prevents API exhaustion while allowing 100+ concurrent users/substations
 const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 300,                  // 300 requests per 15 min per IP
+  max: 1200,                 // 1200 requests per 15 min (supports busy teams)
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many requests from this device. Please wait a moment and try again.',
+    message: 'Too many requests from this network. Please wait a moment and try again.',
   },
 });
 

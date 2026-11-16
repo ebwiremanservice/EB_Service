@@ -252,6 +252,55 @@ class AuthService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Verify & Activate Purchase (Google Play Billing or Direct Payment)
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<Map<String, dynamic>> verifyPurchase({
+    String? paymentId,
+    String? purchaseToken,
+    String? productId,
+    int amount = 799,
+  }) async {
+    if (!isAuthenticated) throw const ApiException('Not authenticated.');
+    final baseUrl = ApiService.baseUrl;
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/verify-purchase'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_cachedToken',
+            },
+            body: jsonEncode({
+              'paymentId': paymentId,
+              'purchaseToken': purchaseToken,
+              'productId': productId ?? 'wireman_pro_yearly_799',
+              'amount': amount,
+            }),
+          )
+          .timeout(const Duration(seconds: 35));
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode == 200 && body['success'] == true) {
+        final user = body['user'] as Map<String, dynamic>;
+        final sub = user['subscription'] as Map<String, dynamic>?;
+        _cachedPlan = sub?['plan'] as String? ?? 'pro_yearly';
+        _cachedEnd = sub?['endDate'] as String? ?? '';
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_subStatusKey, 'active');
+        await prefs.setString(_subPlanKey, _cachedPlan!);
+        if (_cachedEnd != null) await prefs.setString(_subEndKey, _cachedEnd!);
+
+        return user;
+      }
+      throw ApiException(body['message'] as String? ?? 'Failed to activate subscription.');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Network error during purchase activation: ${e.toString()}');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Logout & Clear Session
   // ─────────────────────────────────────────────────────────────────────────
   static Future<void> logout() async {

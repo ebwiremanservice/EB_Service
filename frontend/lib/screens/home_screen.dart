@@ -9,7 +9,9 @@ import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../widgets/curved_header.dart';
+import '../widgets/payment_dialog.dart';
 import '../widgets/record_card.dart';
+import '../widgets/skeleton_shimmer.dart';
 import 'add_record_screen.dart';
 import 'profile_screen.dart';
 
@@ -607,22 +609,22 @@ class _HomeScreenState extends State<HomeScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: const Color(0xFFEEF2FF),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(color: const Color(0xFFC7D2FE)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFB45309)),
+                  Icon(Icons.bolt_rounded, size: 20, color: Color(0xFF4338CA)),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Online payment gateway will be enabled soon. Contact admin to activate Pro early.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                      'Instant 1-Tap Activation via Google Play & UPI',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF3730A3)),
                     ),
                   ),
                 ],
@@ -631,18 +633,28 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D47A1),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
               ),
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Got it'),
-            ),
+              const Spacer(),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D47A1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  PaymentDialog.show(context, onSuccess: () {
+                    _loadAllData();
+                  });
+                },
+                icon: const Icon(Icons.payment_rounded, size: 18),
+                label: const Text('Pay & Upgrade (₹799)'),
+              ),
+            ],
           ),
         ],
       ),
@@ -803,22 +815,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // ── Tab Content Area ─────────────────────────────────────────────────
         Expanded(
           child: _loading
-              ? const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Color(0xFF1565C0),
-                      ),
-                      SizedBox(height: 14),
-                      Text(
-                        'Loading records...',
-                        style: TextStyle(fontSize: 13.5, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                )
+              ? const HomeListSkeleton()
               : _errorMessage != null
                   ? _buildErrorView()
                   : RefreshIndicator(

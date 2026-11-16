@@ -117,6 +117,12 @@ ebRecordSchema.index({ userId: 1, ebNumber: 1 }, { unique: true, sparse: true })
 // Index for fast zone-wise grouping and filtering per user
 ebRecordSchema.index({ userId: 1, zone: 1 });
 
+// Index for fast scheduled visits query
+ebRecordSchema.index({ userId: 1, scheduledDate: 1 });
+
+// Index for fast chronological retrieval of latest records
+ebRecordSchema.index({ userId: 1, updatedAt: -1 });
+
 // Compound text index for fast search (includes zone)
 ebRecordSchema.index(
   { ebNumber: 'text', consumerName: 'text', mobileNumber: 'text', landmarkNotes: 'text', address: 'text', zone: 'text' },

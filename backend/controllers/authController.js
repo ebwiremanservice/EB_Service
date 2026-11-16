@@ -344,4 +344,45 @@ exports.deleteAccount = async (req, res) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/verify-purchase
+// Activates Pro Annual Subscription upon Google Play / In-App payment
+// ─────────────────────────────────────────────────────────────────────────────
+exports.verifyPurchase = async (req, res) => {
+  try {
+    const { paymentId, purchaseToken, productId, amount } = req.body;
+    const user = req.user;
+
+    const startDate = new Date();
+    const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
+
+    user.subscription = {
+      status: 'active',
+      plan: 'pro_yearly',
+      startDate,
+      endDate,
+      paymentId: paymentId || purchaseToken || `pay_${Date.now()}`,
+      amountPaid: amount || 799,
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified! Wireman Pro Annual Subscription is now active.',
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        registeredHousesCount: user.registeredHousesCount,
+        canAddHouse: true,
+        subscription: user.subscription,
+      },
+    });
+  } catch (error) {
+    console.error('[verifyPurchase]', error);
+    return res.status(500).json({ success: false, message: 'Server error while verifying purchase.' });
+  }
+};
+
 

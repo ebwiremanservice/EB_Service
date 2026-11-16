@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../widgets/payment_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -890,31 +891,38 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildPlanBadge() {
     final isLifetime = AuthService.isLifetime;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        gradient: isLifetime
-            ? const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)])
-            : const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: (isLifetime ? const Color(0xFFF59E0B) : const Color(0xFF3B82F6)).withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(isLifetime ? Icons.bolt_rounded : Icons.star_rounded, size: 15, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(
-            isLifetime ? 'LIFETIME UNLIMITED' : 'FREE TIER (10 HOUSES)',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.5, letterSpacing: 0.5),
-          ),
-        ],
+    return GestureDetector(
+      onTap: isLifetime ? null : () => PaymentDialog.show(context, onSuccess: _loadFreshData),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: isLifetime
+              ? const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)])
+              : const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: (isLifetime ? const Color(0xFFF59E0B) : const Color(0xFF3B82F6)).withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(isLifetime ? Icons.bolt_rounded : Icons.star_rounded, size: 15, color: Colors.white),
+            const SizedBox(width: 6),
+            Text(
+              isLifetime ? 'LIFETIME UNLIMITED' : 'FREE TIER • UPGRADE ₹799',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.5, letterSpacing: 0.5),
+            ),
+            if (!isLifetime) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Colors.white70),
+            ],
+          ],
+        ),
       ),
     );
   }

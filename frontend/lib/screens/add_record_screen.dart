@@ -11,6 +11,8 @@ import '../services/api_service.dart';
 import '../services/location_service.dart';
 import '../widgets/curved_header.dart';
 import '../widgets/eb_number_formatter.dart';
+import '../widgets/payment_dialog.dart';
+import '../widgets/skeleton_shimmer.dart';
 
 class AddRecordScreen extends StatefulWidget {
   final EbRecord? recordToEdit;
@@ -231,6 +233,7 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
 
   // ── Save / Update Record ───────────────────────────────────────────────────
   Future<void> _saveRecord() async {
+    if (_saving) return; // Prevent double submit
     if (!_formKey.currentState!.validate()) return;
 
     if (!isEditMode && _isEbDuplicate == true) {
@@ -309,70 +312,11 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
   }
 
   void _showQuotaLimitDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Row(
-          children: [
-            Icon(Icons.receipt_long_rounded, color: Color(0xFF0D47A1), size: 28),
-            SizedBox(width: 10),
-            Text('Subscription Bill', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
-              ),
-              child: const Column(
-                children: [
-                  Text('Annual Wireman Plan', style: TextStyle(fontSize: 13, color: Color(0xFF4338CA), fontWeight: FontWeight.w600)),
-                  SizedBox(height: 4),
-                  Text('₹799 / Year', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E1B4B))),
-                  SizedBox(height: 2),
-                  Text('Unlimited meters • Cloud Sync • Backup', style: TextStyle(fontSize: 11.5, color: Color(0xFF6366F1))),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'Your initial meter registration quota is complete. To continue adding new houses, please activate your annual plan.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              '⚡ Online payment gateway integration will be active shortly. Contact admin for instant manual activation.',
-              style: TextStyle(fontSize: 11.5, color: Color(0xFFB45309), fontStyle: FontStyle.italic),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF0D47A1),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _showSnack('Payment gateway will be available soon.', isError: false);
-            },
-            icon: const Icon(Icons.payment_rounded, size: 18),
-            label: const Text('Pay Bill (₹799/Year)'),
-          ),
-        ],
-      ),
+    PaymentDialog.show(
+      context,
+      onSuccess: () {
+        _showSnack('🎉 Wireman Pro is now active! You can now register unlimited houses.', isError: false);
+      },
     );
   }
 
@@ -1257,7 +1201,7 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        gradient: (!isEditMode && _isEbDuplicate == true)
+                        gradient: (_saving || (!isEditMode && _isEbDuplicate == true))
                             ? LinearGradient(
                                 colors: [
                                   Colors.grey.shade400,

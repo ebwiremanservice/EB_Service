@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { sendOtp, verifyOtp, getProfile, updateProfile, deleteAccount } = require('../controllers/authController');
+const { sendOtp, verifyOtp, getProfile, updateProfile, deleteAccount, verifyPurchase } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Rate limiter for sending OTP (max 5 OTP requests per 10 minutes per IP)
@@ -47,6 +47,9 @@ router.put('/profile', authMiddleware, updateProfile);
 
 // DELETE /api/auth/delete-account
 router.delete('/delete-account', authMiddleware, deleteAccount);
+
+// POST /api/auth/verify-purchase
+router.post('/verify-purchase', authMiddleware, verifyPurchase);
 
 module.exports = router;
 
