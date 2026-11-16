@@ -165,7 +165,7 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
     setState(() => _fetchingLocation = true);
 
     try {
-      final pos = await LocationService.getCurrentPosition();
+      final pos = await LocationService.getCurrentPosition(context);
       _position = pos;
 
       final address = await LocationService.getAddressFromCoordinates(

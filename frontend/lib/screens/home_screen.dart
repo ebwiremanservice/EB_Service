@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ── GPS Current Location Detector ─────────────────────────────────────────
   Future<void> _detectCurrentLocation() async {
     try {
-      final pos = await LocationService.getCurrentPosition();
+      final pos = await LocationService.getCurrentPosition(context);
       final address = await LocationService.getAddressFromCoordinates(
         pos.latitude,
         pos.longitude,

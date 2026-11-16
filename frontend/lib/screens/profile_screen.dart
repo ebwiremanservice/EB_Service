@@ -551,7 +551,24 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       '• For support and inquiries, contact us at: ebwiremanservice@gmail.com',
                       style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
                     ),
-                    SizedBox(height: 30),
+                    const SizedBox(height: 18),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0F3A78),
+                        side: const BorderSide(color: Color(0xFF0F3A78)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        minimumSize: const Size(double.infinity, 45),
+                      ),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: const Text('View Official Privacy Policy Online'),
+                      onPressed: () async {
+                        final uri = Uri.parse('https://eb-service.onrender.com/privacy');
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (_) {}
+                      },
+                    ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),

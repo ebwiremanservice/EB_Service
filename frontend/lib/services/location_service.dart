@@ -2,14 +2,16 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 class LocationService {
   /// Requests permissions if needed, then returns the current [Position].
+  /// Shows a Google Play compliant prominent disclosure dialog if [context] is provided.
   /// Throws a [LocationException] with a human-readable message on failure.
-  static Future<Position> getCurrentPosition() async {
+  static Future<Position> getCurrentPosition([BuildContext? context]) async {
     // 1. Ensure the device has location services turned on
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -23,6 +25,57 @@ class LocationService {
 
     // 3. Request if not yet granted
     if (permission == LocationPermission.denied) {
+      if (context != null && context.mounted) {
+        final agreed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F3A78).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.location_on_rounded, color: Color(0xFF0F3A78), size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Location Notice',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F3A78)),
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Wireman Service collects location data to accurately mark consumer electricity meter locations on maps and provide turn-by-turn navigation for field inspection visits.\n\nLocation data is only recorded when you explicitly tap to save or navigate to a service point, and is never sold or used for advertising.',
+              style: TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF475569)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Not Now', style: TextStyle(color: Colors.grey)),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F3A78),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Agree & Continue'),
+              ),
+            ],
+          ),
+        );
+
+        if (agreed != true) {
+          throw const LocationException('Location permission required to tag meter location.');
+        }
+      }
+
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         throw const LocationException(

@@ -3,6 +3,7 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 
@@ -331,7 +332,24 @@ class _AuthScreenState extends State<AuthScreen> {
                       '• For support and inquiries, contact us at: ebwiremanservice@gmail.com',
                       style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
                     ),
-                    SizedBox(height: 30),
+                    const SizedBox(height: 18),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0D47A1),
+                        side: const BorderSide(color: Color(0xFF0D47A1)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        minimumSize: const Size(double.infinity, 45),
+                      ),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: const Text('View Official Privacy Policy Online'),
+                      onPressed: () async {
+                        final uri = Uri.parse('https://eb-service.onrender.com/privacy');
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (_) {}
+                      },
+                    ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
