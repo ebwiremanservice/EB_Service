@@ -258,7 +258,7 @@ class AuthService {
     String? paymentId,
     String? purchaseToken,
     String? productId,
-    int amount = 799,
+    int amount = 699,
   }) async {
     if (!isAuthenticated) throw const ApiException('Not authenticated.');
     final baseUrl = ApiService.baseUrl;
@@ -273,7 +273,7 @@ class AuthService {
             body: jsonEncode({
               'paymentId': paymentId,
               'purchaseToken': purchaseToken,
-              'productId': productId ?? 'wireman_pro_yearly_799',
+              'productId': productId ?? 'wireman_pro_yearly_699',
               'amount': amount,
             }),
           )

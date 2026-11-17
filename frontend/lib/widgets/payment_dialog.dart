@@ -32,7 +32,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
     try {
       // 1. Try launching native UPI Intent (Google Pay / PhonePe / Paytm / BHIM)
       final upiUri = Uri.parse(
-        'upi://pay?pa=ebwiremanservice@okaxis&pn=Wireman%20Service&am=799&cu=INR&tn=Wireman%20Pro%20Yearly%20Plan',
+        'upi://pay?pa=ebwiremanservice@okaxis&pn=EB%20Tracker&am=699&cu=INR&tn=EB%20Tracker%20Pro%20Yearly',
       );
 
       bool launched = false;
@@ -48,8 +48,8 @@ class _PaymentDialogState extends State<PaymentDialog> {
       final paymentId = 'pay_${DateTime.now().millisecondsSinceEpoch}';
       await AuthService.verifyPurchase(
         paymentId: paymentId,
-        productId: 'wireman_pro_yearly_799',
-        amount: 799,
+        productId: 'wireman_pro_yearly_699',
+        amount: 699,
       );
 
       if (mounted) {
@@ -172,22 +172,85 @@ class _PaymentDialogState extends State<PaymentDialog> {
               ),
               child: Column(
                 children: [
+                  // Today Only Special Offer Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bolt_rounded, size: 14, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'TODAY ONLY • SPECIAL OFFER',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   const Text(
                     'ANNUAL WIREMAN SUBSCRIPTION',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1, color: Color(0xFF93C5FD)),
                   ),
                   const SizedBox(height: 6),
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text('₹799', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Colors.white)),
-                      SizedBox(width: 4),
-                      Text('/ Year', style: TextStyle(fontSize: 14, color: Color(0xFFBFDBFE), fontWeight: FontWeight.w500)),
+                      // Cut price 899
+                      Text(
+                        '₹899',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.6),
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: const Color(0xFFF87171),
+                          decorationThickness: 2.2,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Offer price 699
+                      const Text(
+                        '₹699',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        '/ Year',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFBFDBFE),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
@@ -195,8 +258,8 @@ class _PaymentDialogState extends State<PaymentDialog> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
-                      'Just ₹66 / month • Billed annually',
-                      style: TextStyle(fontSize: 11, color: Colors.white),
+                      'Save ₹200 (22% OFF) • Just ₹58 / month',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
                     ),
                   ),
                 ],
@@ -250,7 +313,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
                         children: [
                           Icon(Icons.payment_rounded, size: 20),
                           SizedBox(width: 8),
-                          Text('Pay & Activate Pro (₹799)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5)),
+                          Text('Pay & Activate Pro (₹699)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5)),
                         ],
                       ),
               ),

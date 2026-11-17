@@ -54,7 +54,7 @@ exports.createRecord = async (req, res) => {
         paymentRequired: true,
         limitReached: true,
         count: req.user.registeredHousesCount,
-        message: 'Free tier limit of 10 houses reached. Upgrade to yearly unlimited plan (₹799/yr) to add more houses.',
+        message: 'Free tier limit of 10 houses reached. Upgrade to yearly unlimited plan (₹699/yr) to add more houses.',
       });
     }
 

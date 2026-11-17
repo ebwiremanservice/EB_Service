@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.ebwireman.eb_wireman_app"
+    namespace = "com.eb.wireman.service.tracker"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.ebwireman.eb_wireman_app"
+        applicationId = "com.eb.wireman.service.tracker"
         minSdk = flutter.minSdkVersion          // Required by geolocator
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

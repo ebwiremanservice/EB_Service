@@ -1,4 +1,4 @@
-package com.ebwireman.eb_wireman_app
+package com.eb.wireman.service.tracker
 
 import io.flutter.embedding.android.FlutterActivity
 

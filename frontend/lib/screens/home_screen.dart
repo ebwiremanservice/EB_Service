@@ -473,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Annual Plan (₹799/year)',
+                              'Annual Plan (₹699/year • Today Only)',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -587,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Wireman service Pro',
+              'EB Consumer Service Tracker Pro',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -595,13 +595,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              '₹799 / Year',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF0D47A1),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '₹899',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade500,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: Colors.red.shade400,
+                    decorationThickness: 2,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  '₹699 / Year',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0D47A1),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(
@@ -652,7 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   });
                 },
                 icon: const Icon(Icons.payment_rounded, size: 18),
-                label: const Text('Pay & Upgrade (₹799)'),
+                label: const Text('Pay & Upgrade (₹699)'),
               ),
             ],
           ),
@@ -673,6 +690,27 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // ── Curved Top Header with Greeting, Location & Register Button ────
           CurvedHeader(
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/logo/new_logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
             greeting: 'Hi ${AuthService.userName} ',
             currentLocation: _currentLocationText,
             onRefreshLocation: _detectCurrentLocation,

@@ -64,7 +64,7 @@ app.get('/privacy', (req, res) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Privacy Policy - Wireman Service</title>
+      <title>Privacy Policy - EB Consumer Service Tracker</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 32px 20px; background-color: #f8fafc; }
         .card { background: white; padding: 36px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
@@ -77,9 +77,9 @@ app.get('/privacy', (req, res) => {
     </head>
     <body>
       <div class="card">
-        <h1>Privacy Policy for Wireman Service</h1>
+        <h1>Privacy Policy for EB Consumer Service Tracker</h1>
         <p><strong>Last Updated:</strong> November 2026</p>
-        <p>Wireman Service ("we", "our", or "the app") is committed to protecting your privacy. This Privacy Policy explains our data collection and protection practices in compliance with Google Play Developer Policies.</p>
+        <p>EB Consumer Service Tracker ("we", "our", or "the app") is committed to protecting your privacy. This Privacy Policy explains our data collection and protection practices in compliance with Google Play Developer Policies.</p>
         
         <h2>1. Information We Collect</h2>
         <ul>

@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // Subscription status (10 houses free, ₹799/yr for unlimited)
+    // Subscription status (10 houses free, ₹699/yr for unlimited)
     subscription: {
       status: {
         type: String,

@@ -59,10 +59,10 @@ class CurvedHeader extends StatelessWidget {
                   // App Logo / Custom Leading
                   leading ??
                       Container(
-                        width: 46,
-                        height: 46,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.25),
@@ -72,7 +72,7 @@ class CurvedHeader extends StatelessWidget {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(14),
                           child: Image.asset(
                             'assets/logo/new_logo.png',
                             fit: BoxFit.contain,

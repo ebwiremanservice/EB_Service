@@ -527,7 +527,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
             ),
             const Divider(height: 1),
-            const Expanded(
+            Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(22),
                 child: Column(
@@ -546,7 +546,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     Text('2. Terms of Service', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F3A78))),
                     SizedBox(height: 8),
                     Text(
-                      '• Wireman Service is designed for electrical field personnel to organize meter coordinates.\n'
+                      '• EB Consumer Service Tracker is designed for electrical field personnel to organize meter coordinates.\n'
                       '• Field workers are responsible for verifying physical meter locations safely.\n'
                       '• For support and inquiries, contact us at: ebwiremanservice@gmail.com',
                       style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF334155)),
@@ -831,7 +831,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                     builder: (ctx) => AlertDialog(
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                                       title: const Text('Log Out?', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      content: const Text('Are you sure you want to log out of Wireman Service?'),
+                                      content: const Text('Are you sure you want to log out of EB Consumer Service Tracker?'),
                                       actions: [
                                         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
                                         FilledButton(
@@ -931,7 +931,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             Icon(isLifetime ? Icons.bolt_rounded : Icons.star_rounded, size: 15, color: Colors.white),
             const SizedBox(width: 6),
             Text(
-              isLifetime ? 'LIFETIME UNLIMITED' : 'FREE TIER • UPGRADE ₹799',
+              isLifetime ? 'LIFETIME UNLIMITED' : 'FREE TIER • UPGRADE ₹699',
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.5, letterSpacing: 0.5),
             ),
             if (!isLifetime) ...[

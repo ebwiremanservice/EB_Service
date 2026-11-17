@@ -183,8 +183,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
                       child: Image.asset(
-                        'assets/logo/app_logo.png',
-                        fit: BoxFit.cover,
+                        'assets/logo/new_logo.png',
+                        fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.white24,
                           child: const Icon(Icons.bolt_rounded, color: Colors.amber, size: 40),
@@ -194,7 +194,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 14),
                   const Text(
-                    'Wireman service',
+                    'EB Consumer Service Tracker',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 26,
@@ -307,7 +307,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
             const Divider(height: 1),
-            const Expanded(
+            Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
                 child: Column(

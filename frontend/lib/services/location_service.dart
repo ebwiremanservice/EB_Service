@@ -51,7 +51,7 @@ class LocationService {
               ],
             ),
             content: const Text(
-              'Wireman Service collects location data to accurately mark consumer electricity meter locations on maps and provide turn-by-turn navigation for field inspection visits.\n\nLocation data is only recorded when you explicitly tap to save or navigate to a service point, and is never sold or used for advertising.',
+              'EB Consumer Service Tracker collects location data to accurately mark consumer electricity meter locations on maps and provide turn-by-turn navigation for field inspection visits.\n\nLocation data is only recorded when you explicitly tap to save or navigate to a service point, and is never sold or used for advertising.',
               style: TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF475569)),
             ),
             actions: [

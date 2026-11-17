@@ -362,7 +362,7 @@ exports.verifyPurchase = async (req, res) => {
       startDate,
       endDate,
       paymentId: paymentId || purchaseToken || `pay_${Date.now()}`,
-      amountPaid: amount || 799,
+      amountPaid: amount || 699,
     };
 
     await user.save();
