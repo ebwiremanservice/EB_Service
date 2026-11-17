@@ -116,6 +116,73 @@ app.get('/privacy', (req, res) => {
   `);
 });
 
+// Official Data & Account Deletion Request URL for Google Play Console submission
+app.get(['/delete-account', '/data-deletion'], (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Account & Data Deletion - EB Consumer Service Tracker</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 32px 20px; background-color: #f8fafc; }
+        .card { background: white; padding: 36px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        h1 { color: #b91c1c; font-size: 26px; margin-top: 0; }
+        h2 { color: #0f3a78; font-size: 18px; margin-top: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+        p, li { font-size: 14.5px; color: #475569; }
+        ul, ol { padding-left: 22px; }
+        .box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 18px; margin: 18px 0; }
+        .btn { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin-top: 10px; }
+        .btn:hover { background: #b91c1c; }
+        .info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px; margin-top: 24px; font-size: 13.5px; color: #1e3a8a; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h1>Account & Data Deletion Request</h1>
+        <p><strong>App:</strong> EB Consumer Service Tracker</p>
+        <p>In accordance with Google Play's User Data & Data Deletion policy, users have full control over their personal data and may request permanent deletion of their account and all associated information at any time.</p>
+
+        <h2>Method 1: Instant In-App Deletion (Recommended)</h2>
+        <p>You can delete your account and wipe all stored data immediately without waiting:</p>
+        <ol>
+          <li>Open the <strong>EB Consumer Service Tracker</strong> mobile app.</li>
+          <li>Tap on your <strong>Profile</strong> icon at the top right of the home screen.</li>
+          <li>Scroll down to the <strong>Permanent Account Deletion</strong> card.</li>
+          <li>Tap <strong>Delete Account & All Records</strong> and confirm the warning prompt.</li>
+          <li>Your account, profile, and all saved meter records will be deleted immediately and permanently.</li>
+        </ol>
+
+        <h2>Method 2: Request Deletion via Email / Web</h2>
+        <p>If you have uninstalled the app or cannot access your account, you can submit a deletion request directly to our support team:</p>
+        <div class="box">
+          <p style="margin-top:0;"><strong>Send an email with your registered email address to:</strong></p>
+          <p><a href="mailto:ebwiremanservice@gmail.com?subject=Account%20Deletion%20Request%20-%20EB%20Consumer%20Service%20Tracker&body=Please%20permanently%20delete%20my%20account%20and%20all%20associated%20consumer%20records.%0A%0ARegistered%20Email%20Address:%20" class="btn">✉️ Request Account Deletion via Email</a></p>
+          <p style="font-size:13px; color:#64748b; margin-bottom:0;">Email: <strong>ebwiremanservice@gmail.com</strong><br>Subject: Account Deletion Request - EB Consumer Service Tracker</p>
+        </div>
+
+        <h2>What Data Will Be Deleted?</h2>
+        <ul>
+          <li><strong>User Profile:</strong> Your registered email address and display name.</li>
+          <li><strong>Service & Meter Records:</strong> All consumer numbers, GPS coordinates, addresses, contact details, and notes created under your account.</li>
+          <li><strong>Authentication Data:</strong> Active login tokens and session records.</li>
+        </ul>
+
+        <h2>Data Retention Period</h2>
+        <p>When you delete your account via the app, all records are <strong>immediately removed</strong> from our live database. Email deletion requests are processed within <strong>24 to 48 hours</strong>.</p>
+
+        <div class="info">
+          <strong>Questions or Assistance?</strong><br>
+          Contact our support team at <a href="mailto:ebwiremanservice@gmail.com">ebwiremanservice@gmail.com</a>.
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // ─── API Routes ──────────────────────────────────────────────────────────────
 app.use('/api', globalApiLimiter);
 app.use('/api/auth', authRoutes);
